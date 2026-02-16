@@ -149,7 +149,7 @@ function updateBanner() {
 
 function spawnParticles() {
     const container = $('#particles');
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
         const angle = Math.random() * Math.PI * 2;
@@ -180,8 +180,7 @@ function eat(e) {
 
     const khinkali = $('#khinkali');
     khinkali.classList.remove('wobble');
-    void khinkali.offsetWidth;
-    khinkali.classList.add('wobble');
+    requestAnimationFrame(() => khinkali.classList.add('wobble'));
 
     spawnParticles();
 
@@ -372,11 +371,11 @@ function installApp() {
 }
 
 // ── Event listeners ──
-$('#khinkaliZone').addEventListener('click', eat);
-$('#khinkaliZone').addEventListener('touchstart', (e) => {
+// Use pointer events — single handler for touch + mouse, no double-firing
+$('#khinkaliZone').addEventListener('pointerdown', (e) => {
     e.preventDefault();
     eat(e);
-}, { passive: false });
+});
 
 $('#shareBtn').addEventListener('click', shareCard);
 $('#langBtn').addEventListener('click', toggleLang);
