@@ -27,23 +27,46 @@ body {
     flex-direction: column;
 }
 
-/* Global banner */
-.global-banner {
+/* Top bar */
+.top-bar {
     background: var(--surface);
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #ffffff10;
+}
+
+.global-banner {
+    flex: 1;
     text-align: center;
     padding: 10px;
     font-size: 13px;
     color: var(--text-dim);
-    border-bottom: 1px solid #ffffff10;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
 }
 
-#globalCount, #globalPeople {
+.global-banner .gold {
     color: var(--gold);
     font-weight: 700;
+}
+
+.lang-btn {
+    background: none;
+    border: 1px solid #ffffff20;
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background 0.2s;
+}
+
+.lang-btn:active {
+    background: #ffffff10;
 }
 
 /* Main area */
@@ -337,6 +360,34 @@ body {
 }
 
 .share-btn:active {
+    transform: scale(0.95);
+}
+
+/* Actions row */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Install button */
+.install-btn {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid #ffffff15;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s;
+}
+
+.install-btn:active {
     transform: scale(0.95);
 }
 

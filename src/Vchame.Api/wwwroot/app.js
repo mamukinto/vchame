@@ -1,6 +1,100 @@
 const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
 
-// Device ID
+// ── i18n ──
+const i18n = {
+    ka: {
+        title: 'ვჭამე',
+        tapHint: 'შემეხე!',
+        today: 'დღეს',
+        thisWeek: 'ამ კვირას',
+        thisMonth: 'ამ თვეში',
+        allTime: 'სულ',
+        share: 'გაზიარება',
+        install: 'დააინსტალირე',
+        installHint: 'დაამატე მთავარ ეკრანზე',
+        bannerCounted: 'ხინკალი დათვლილია',
+        bannerBy: 'ადამიანის მიერ',
+        shareToday: 'დღეს ვჭამე',
+        shareKhinkali: 'ხინკალი',
+        shareWeek: 'ამ კვირას',
+        shareMonth: 'ამ თვეში',
+        shareAll: 'სულ',
+        shareWatermark: 'დათვალე შენი ხინკალი',
+        moods: [
+            { max: 0, text: 'მშიერი ხარ?' },
+            { max: 3, text: 'კარგი დასაწყისი!' },
+            { max: 8, text: 'ნორმალური ტემპი' },
+            { max: 15, text: 'შენელდი ცოტა...' },
+            { max: 25, text: 'ძმაო...' },
+            { max: 40, text: 'ოჯახი მყავს!' },
+            { max: Infinity, text: 'მონსტრი ხარ' },
+        ],
+    },
+    en: {
+        title: 'vchame',
+        tapHint: 'tap me!',
+        today: 'today',
+        thisWeek: 'this week',
+        thisMonth: 'this month',
+        allTime: 'all time',
+        share: 'Share to Stories',
+        install: 'Install App',
+        installHint: 'Add to Home Screen',
+        bannerCounted: 'khinkali counted by',
+        bannerBy: 'people',
+        shareToday: 'TODAY I ATE',
+        shareKhinkali: 'KHINKALI',
+        shareWeek: 'THIS WEEK',
+        shareMonth: 'THIS MONTH',
+        shareAll: 'ALL TIME',
+        shareWatermark: 'count your khinkali',
+        moods: [
+            { max: 0, text: 'hungry?' },
+            { max: 3, text: 'good start!' },
+            { max: 8, text: 'nice pace' },
+            { max: 15, text: 'maybe slow down...' },
+            { max: 25, text: 'my brother in christ' },
+            { max: 40, text: 'I have a family' },
+            { max: Infinity, text: 'you monster' },
+        ],
+    },
+};
+
+let lang = localStorage.getItem('vchame_lang') || 'ka';
+
+function t(key) { return i18n[lang][key]; }
+
+function applyLang() {
+    localStorage.setItem('vchame_lang', lang);
+    document.documentElement.lang = lang;
+
+    // Update all [data-i18n] elements
+    $$('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+    });
+
+    // Lang switcher button shows the OTHER language
+    $('#langBtn').textContent = lang === 'ka' ? 'EN' : 'ქარ';
+
+    // Share button
+    $('#shareBtn').innerHTML = `<span>📸</span> ${t('share')}`;
+
+    // Install button
+    if ($('#installBtn')) {
+        $('#installBtn').innerHTML = `<span>📲</span> ${t('install')}`;
+    }
+
+    updateMood();
+    updateBanner();
+}
+
+function toggleLang() {
+    lang = lang === 'ka' ? 'en' : 'ka';
+    applyLang();
+}
+
+// ── Device ID ──
 function getDeviceId() {
     let id = localStorage.getItem('vchame_device_id');
     if (!id) {
@@ -15,27 +109,42 @@ let todayCount = 0;
 let pendingCount = 0;
 let syncTimer = null;
 
-const moods = [
-    { max: 0,   cls: 'mood-happy',   text: 'hungry?' },
-    { max: 3,   cls: 'mood-happy',   text: 'good start!' },
-    { max: 8,   cls: 'mood-neutral', text: 'nice pace' },
-    { max: 15,  cls: 'mood-worried', text: 'maybe slow down...' },
-    { max: 25,  cls: 'mood-sad',     text: 'my brother in christ' },
-    { max: 40,  cls: 'mood-crying',  text: 'I have a family' },
-    { max: Infinity, cls: 'mood-dead', text: 'you monster' },
-];
+const moodClasses = ['mood-happy', 'mood-neutral', 'mood-worried', 'mood-sad', 'mood-crying', 'mood-dead'];
+
+function getMood() {
+    const moods = t('moods');
+    return moods.find(m => todayCount <= m.max);
+}
+
+function getMoodCls() {
+    if (todayCount <= 3) return 'mood-happy';
+    if (todayCount <= 8) return 'mood-neutral';
+    if (todayCount <= 15) return 'mood-worried';
+    if (todayCount <= 25) return 'mood-sad';
+    if (todayCount <= 40) return 'mood-crying';
+    return 'mood-dead';
+}
 
 function updateMood() {
     const face = $('#face');
-    const mood = moods.find(m => todayCount <= m.max);
+    const cls = getMoodCls();
+    const mood = getMood();
 
-    moods.forEach(m => face.classList.remove(m.cls));
-    face.classList.add(mood.cls);
-    $('#moodText').textContent = mood.text;
+    moodClasses.forEach(c => face.classList.remove(c));
+    face.classList.add(cls);
+    $('#moodText').textContent = mood?.text || '';
 
     if (todayCount > 0) {
         $('#tapHint').style.display = 'none';
     }
+}
+
+let globalTotal = 0;
+let globalPeople = 0;
+
+function updateBanner() {
+    $('#globalBanner').innerHTML =
+        `<span>🇬🇪</span> <span class="gold">${globalTotal.toLocaleString()}</span> ${t('bannerCounted')} <span class="gold">${globalPeople.toLocaleString()}</span> ${t('bannerBy')}`;
 }
 
 function spawnParticles() {
@@ -66,28 +175,23 @@ function eat(e) {
     todayCount++;
     pendingCount++;
 
-    // Update UI instantly
     $('#todayCount').textContent = todayCount;
     updateMood();
 
-    // Animations
     const khinkali = $('#khinkali');
     khinkali.classList.remove('wobble');
-    void khinkali.offsetWidth; // force reflow
+    void khinkali.offsetWidth;
     khinkali.classList.add('wobble');
 
     spawnParticles();
 
-    // +1 near tap position
     const rect = $('#khinkaliZone').getBoundingClientRect();
-    const px = (e.clientX || e.touches?.[0]?.clientX || rect.left + rect.width/2) - rect.left;
-    const py = (e.clientY || e.touches?.[0]?.clientY || rect.top + rect.height/2) - rect.top;
+    const px = (e.clientX || e.touches?.[0]?.clientX || rect.left + rect.width / 2) - rect.left;
+    const py = (e.clientY || e.touches?.[0]?.clientY || rect.top + rect.height / 2) - rect.top;
     spawnPlusOne(px - 15, py - 30);
 
-    // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(30);
 
-    // Debounced sync — batch taps together
     clearTimeout(syncTimer);
     syncTimer = setTimeout(syncToServer, 500);
 }
@@ -106,7 +210,6 @@ async function syncToServer() {
         loadStats();
         loadGlobal();
     } catch {
-        // Offline — keep counting locally
         pendingCount += count;
     }
 }
@@ -128,18 +231,18 @@ async function loadGlobal() {
     try {
         const res = await fetch('/api/global');
         const data = await res.json();
-        $('#globalCount').textContent = data.total.toLocaleString();
-        $('#globalPeople').textContent = data.people.toLocaleString();
+        globalTotal = data.total;
+        globalPeople = data.people;
+        updateBanner();
     } catch { /* offline */ }
 }
 
-// Share card generation
+// ── Share card ──
 function generateShareCard() {
     const canvas = $('#shareCanvas');
     const ctx = canvas.getContext('2d');
     const w = 1080, h = 1920;
 
-    // Background gradient
     const grad = ctx.createLinearGradient(0, 0, w, h);
     grad.addColorStop(0, '#1a1a2e');
     grad.addColorStop(0.5, '#16213e');
@@ -147,66 +250,51 @@ function generateShareCard() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // Decorative circles
     ctx.globalAlpha = 0.05;
     ctx.fillStyle = '#e94560';
-    ctx.beginPath(); ctx.arc(900, 300, 300, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(900, 300, 300, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#f5c518';
-    ctx.beginPath(); ctx.arc(180, 1500, 250, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(180, 1500, 250, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
 
-    // Big khinkali emoji
     ctx.font = '280px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('🥟', w/2, 580);
+    ctx.fillText('🥟', w / 2, 580);
 
-    // Mood emoji
-    const mood = moods.find(m => todayCount <= m.max);
     const moodEmojis = {
-        'mood-happy': '😊',
-        'mood-neutral': '😐',
-        'mood-worried': '😟',
-        'mood-sad': '😢',
-        'mood-crying': '😭',
-        'mood-dead': '💀',
+        'mood-happy': '😊', 'mood-neutral': '😐', 'mood-worried': '😟',
+        'mood-sad': '😢', 'mood-crying': '😭', 'mood-dead': '💀',
     };
     ctx.font = '120px serif';
-    ctx.fillText(moodEmojis[mood.cls] || '🥟', w/2, 740);
+    ctx.fillText(moodEmojis[getMoodCls()] || '🥟', w / 2, 740);
 
-    // "I ATE" text
     ctx.fillStyle = '#888';
     ctx.font = '600 48px -apple-system, sans-serif';
-    ctx.fillText("TODAY I ATE", w/2, 880);
+    ctx.fillText(t('shareToday').toUpperCase(), w / 2, 880);
 
-    // Count
     ctx.font = '800 200px -apple-system, sans-serif';
-    const countGrad = ctx.createLinearGradient(w/2 - 200, 900, w/2 + 200, 1100);
+    const countGrad = ctx.createLinearGradient(w / 2 - 200, 900, w / 2 + 200, 1100);
     countGrad.addColorStop(0, '#f5c518');
     countGrad.addColorStop(1, '#e94560');
     ctx.fillStyle = countGrad;
-    ctx.fillText(todayCount.toString(), w/2, 1100);
+    ctx.fillText(todayCount.toString(), w / 2, 1100);
 
-    // "KHINKALI" text
     ctx.fillStyle = '#eee';
     ctx.font = '700 64px -apple-system, sans-serif';
-    ctx.fillText('KHINKALI', w/2, 1200);
+    ctx.fillText(t('shareKhinkali').toUpperCase(), w / 2, 1200);
 
-    // Mood text
     ctx.fillStyle = '#888';
     ctx.font = 'italic 40px -apple-system, sans-serif';
-    ctx.fillText(`"${mood.text}"`, w/2, 1300);
+    const mood = getMood();
+    ctx.fillText(`"${mood?.text || ''}"`, w / 2, 1300);
 
-    // Stats row
     const stats = [
-        { label: 'THIS WEEK', value: $('#weekCount').textContent },
-        { label: 'THIS MONTH', value: $('#monthCount').textContent },
-        { label: 'ALL TIME', value: $('#allTimeCount').textContent },
+        { label: t('shareWeek').toUpperCase(), value: $('#weekCount').textContent },
+        { label: t('shareMonth').toUpperCase(), value: $('#monthCount').textContent },
+        { label: t('shareAll').toUpperCase(), value: $('#allTimeCount').textContent },
     ];
 
-    const cardY = 1420;
-    const cardW = 280;
-    const cardH = 160;
-    const gap = 30;
+    const cardY = 1420, cardW = 280, cardH = 160, gap = 30;
     const startX = (w - (cardW * 3 + gap * 2)) / 2;
 
     stats.forEach((s, i) => {
@@ -218,21 +306,20 @@ function generateShareCard() {
 
         ctx.fillStyle = '#eee';
         ctx.font = '800 52px -apple-system, sans-serif';
-        ctx.fillText(s.value, x + cardW/2, cardY + 70);
+        ctx.fillText(s.value, x + cardW / 2, cardY + 70);
 
         ctx.fillStyle = '#666';
         ctx.font = '600 22px -apple-system, sans-serif';
-        ctx.fillText(s.label, x + cardW/2, cardY + 110);
+        ctx.fillText(s.label, x + cardW / 2, cardY + 110);
     });
 
-    // Watermark
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.font = '600 36px -apple-system, sans-serif';
-    ctx.fillText('vchame.ge', w/2, 1760);
+    ctx.fillText('vchame.ge', w / 2, 1760);
 
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.font = '28px -apple-system, sans-serif';
-    ctx.fillText('count your khinkali', w/2, 1810);
+    ctx.fillText(t('shareWatermark'), w / 2, 1810);
 
     return canvas;
 }
@@ -248,19 +335,14 @@ function roundRect(ctx, x, y, w, h, r) {
 
 async function shareCard() {
     const canvas = generateShareCard();
-
     canvas.toBlob(async (blob) => {
         const file = new File([blob], 'vchame-stats.png', { type: 'image/png' });
-
-        // Try native share first (mobile)
         if (navigator.canShare?.({ files: [file] })) {
             try {
                 await navigator.share({ files: [file], title: 'My Khinkali Stats' });
                 return;
-            } catch { /* user cancelled or failed */ }
+            } catch { /* cancelled */ }
         }
-
-        // Fallback: download
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -270,7 +352,26 @@ async function shareCard() {
     }, 'image/png');
 }
 
-// Event listeners
+// ── PWA Install ──
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $('#installBtn').style.display = 'flex';
+});
+
+function installApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+            deferredPrompt = null;
+            $('#installBtn').style.display = 'none';
+        });
+    }
+}
+
+// ── Event listeners ──
 $('#khinkaliZone').addEventListener('click', eat);
 $('#khinkaliZone').addEventListener('touchstart', (e) => {
     e.preventDefault();
@@ -278,7 +379,10 @@ $('#khinkaliZone').addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 $('#shareBtn').addEventListener('click', shareCard);
+$('#langBtn').addEventListener('click', toggleLang);
+$('#installBtn')?.addEventListener('click', installApp);
 
-// Init
+// ── Init ──
+applyLang();
 loadStats();
 loadGlobal();

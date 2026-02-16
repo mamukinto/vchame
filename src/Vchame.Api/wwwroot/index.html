@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>ვჭამე — Khinkali Counter</title>
-    <meta name="description" content="Count your khinkali. Share your shame. 🥟">
+    <meta name="description" content="Count your khinkali. Share your shame.">
     <meta property="og:title" content="ვჭამე — Khinkali Counter">
     <meta property="og:description" content="How many khinkali did you eat today?">
     <meta property="og:type" content="website">
@@ -19,9 +19,9 @@
 </head>
 <body>
     <div id="app">
-        <div class="global-banner" id="globalBanner">
-            <span>🇬🇪</span>
-            <span id="globalCount">...</span> khinkali counted by <span id="globalPeople">...</span> people
+        <div class="top-bar">
+            <div class="global-banner" id="globalBanner"></div>
+            <button class="lang-btn" id="langBtn">EN</button>
         </div>
 
         <div class="main">
@@ -37,7 +37,7 @@
                             <div class="mouth" id="mouth"></div>
                         </div>
                     </div>
-                    <div class="tap-hint" id="tapHint">tap me!</div>
+                    <div class="tap-hint" id="tapHint" data-i18n="tapHint">შემეხე!</div>
                 </div>
                 <div class="bite-particles" id="particles"></div>
             </div>
@@ -45,29 +45,34 @@
             <div class="counter">
                 <div class="count-display">
                     <span class="count-number" id="todayCount">0</span>
-                    <span class="count-label">today</span>
+                    <span class="count-label" data-i18n="today">დღეს</span>
                 </div>
-                <div class="mood-text" id="moodText">hungry?</div>
+                <div class="mood-text" id="moodText"></div>
             </div>
 
             <div class="stats">
                 <div class="stat">
                     <span class="stat-number" id="weekCount">0</span>
-                    <span class="stat-label">this week</span>
+                    <span class="stat-label" data-i18n="thisWeek">ამ კვირას</span>
                 </div>
                 <div class="stat">
                     <span class="stat-number" id="monthCount">0</span>
-                    <span class="stat-label">this month</span>
+                    <span class="stat-label" data-i18n="thisMonth">ამ თვეში</span>
                 </div>
                 <div class="stat">
                     <span class="stat-number" id="allTimeCount">0</span>
-                    <span class="stat-label">all time</span>
+                    <span class="stat-label" data-i18n="allTime">სულ</span>
                 </div>
             </div>
 
-            <button class="share-btn" id="shareBtn">
-                <span>📸</span> Share to Stories
-            </button>
+            <div class="actions">
+                <button class="share-btn" id="shareBtn">
+                    <span>📸</span> გაზიარება
+                </button>
+                <button class="install-btn" id="installBtn" style="display:none">
+                    <span>📲</span> დააინსტალირე
+                </button>
+            </div>
         </div>
     </div>
 
