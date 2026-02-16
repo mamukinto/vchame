@@ -1,4 +1,4 @@
-const CACHE = 'vchame-v3';
+const CACHE = 'vchame-v4';
 const ASSETS = ['/', '/style.css', '/app.js', '/icon.svg', '/manifest.json'];
 
 self.addEventListener('install', (e) => {

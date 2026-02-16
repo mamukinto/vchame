@@ -262,6 +262,130 @@ async function loadGlobal() {
     } catch {}
 }
 
+// ── Draw khinkali on canvas ──
+function drawKhinkali(ctx, cx, cy, moodIdx) {
+    const s = 2; // scale factor for share card
+
+    // Body
+    ctx.save();
+    ctx.translate(cx, cy);
+    const bw = 140 * s, bh = 120 * s;
+    const bodyGrad = ctx.createLinearGradient(-bw/2, -bh/2, bw/2, bh/2);
+    bodyGrad.addColorStop(0, '#f5e6d3');
+    bodyGrad.addColorStop(1, '#e8d5b8');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, bw / 2, bh / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shadow on body
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(0, bh * 0.15, bw / 2, bh / 4, 0, 0, Math.PI);
+    ctx.fill();
+
+    // Top knob
+    const kw = 30 * s, kh = 24 * s;
+    const topGrad = ctx.createLinearGradient(-kw/2, -bh/2 - kh, kw/2, -bh/2);
+    topGrad.addColorStop(0, '#e8d5b8');
+    topGrad.addColorStop(1, '#d4c4a8');
+    ctx.fillStyle = topGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -bh / 2 - kh * 0.3, kw / 2, kh / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Fold lines on knob
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+    ctx.lineWidth = 2 * s;
+    ctx.beginPath();
+    ctx.ellipse(-6 * s, -bh / 2 - kh * 0.2, 4 * s, 10 * s, -0.25, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(6 * s, -bh / 2 - kh * 0.2, 4 * s, 10 * s, 0.25, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Face — offset upward from center
+    const fy = -10 * s;
+    const eyeGap = 24 * s;
+    const eyeR = 10 * s;
+    const eyeColor = '#4a3728';
+
+    // mood: 0=happy(hungry), 1=happy, 2=happy, 3=neutral, 4=worried, 5=sad, 6=crying, 7=dead
+    if (moodIdx <= 2) {
+        // Happy — squinted eyes (arcs)
+        ctx.strokeStyle = eyeColor;
+        ctx.lineWidth = 3 * s;
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(-eyeGap / 2, fy - 4 * s, 6 * s, Math.PI, 0); ctx.stroke();
+        ctx.beginPath(); ctx.arc(eyeGap / 2, fy - 4 * s, 6 * s, Math.PI, 0); ctx.stroke();
+        // Smile
+        ctx.fillStyle = eyeColor;
+        ctx.beginPath(); ctx.arc(0, fy + 14 * s, 10 * s, 0, Math.PI); ctx.fill();
+    } else if (moodIdx === 3) {
+        // Neutral — normal eyes, flat mouth
+        ctx.fillStyle = eyeColor;
+        ctx.beginPath(); ctx.arc(-eyeGap / 2, fy, eyeR / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeGap / 2, fy, eyeR / 2, 0, Math.PI * 2); ctx.fill();
+        // Eye shine
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(-eyeGap / 2 + 2 * s, fy - 2 * s, 2 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeGap / 2 + 2 * s, fy - 2 * s, 2 * s, 0, Math.PI * 2); ctx.fill();
+        // Flat mouth
+        ctx.fillStyle = eyeColor;
+        ctx.fillRect(-8 * s, fy + 14 * s, 16 * s, 3 * s);
+    } else if (moodIdx === 4) {
+        // Worried — big eyes, O mouth
+        ctx.fillStyle = eyeColor;
+        ctx.beginPath(); ctx.arc(-eyeGap / 2, fy, eyeR * 0.6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeGap / 2, fy, eyeR * 0.6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(-eyeGap / 2 + 2 * s, fy - 2 * s, 2.5 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeGap / 2 + 2 * s, fy - 2 * s, 2.5 * s, 0, Math.PI * 2); ctx.fill();
+        // O mouth
+        ctx.strokeStyle = eyeColor; ctx.lineWidth = 2.5 * s;
+        ctx.beginPath(); ctx.arc(0, fy + 16 * s, 6 * s, 0, Math.PI * 2); ctx.stroke();
+    } else if (moodIdx === 5) {
+        // Sad — eyes with tears, frown
+        ctx.fillStyle = eyeColor;
+        ctx.beginPath(); ctx.arc(-eyeGap / 2, fy, eyeR / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeGap / 2, fy, eyeR / 2, 0, Math.PI * 2); ctx.fill();
+        // Tears
+        ctx.fillStyle = 'rgba(100,150,255,0.5)';
+        ctx.beginPath(); ctx.arc(-eyeGap / 2, fy + 10 * s, 3 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeGap / 2, fy + 10 * s, 3 * s, 0, Math.PI * 2); ctx.fill();
+        // Frown
+        ctx.strokeStyle = eyeColor; ctx.lineWidth = 3 * s; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(0, fy + 24 * s, 10 * s, Math.PI, 0); ctx.stroke();
+    } else if (moodIdx === 6) {
+        // Crying — closed eyes, tears, open mouth
+        ctx.strokeStyle = eyeColor; ctx.lineWidth = 3 * s; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(-eyeGap / 2, fy + 2 * s, 6 * s, 0, Math.PI); ctx.stroke();
+        ctx.beginPath(); ctx.arc(eyeGap / 2, fy + 2 * s, 6 * s, 0, Math.PI); ctx.stroke();
+        // Tears streaming
+        ctx.fillStyle = 'rgba(100,150,255,0.6)';
+        ctx.fillRect(-eyeGap / 2 - 2 * s, fy + 6 * s, 4 * s, 14 * s);
+        ctx.fillRect(eyeGap / 2 - 2 * s, fy + 6 * s, 4 * s, 14 * s);
+        // Open mouth
+        ctx.fillStyle = eyeColor;
+        ctx.beginPath(); ctx.ellipse(0, fy + 22 * s, 10 * s, 7 * s, 0, 0, Math.PI * 2); ctx.fill();
+    } else {
+        // Dead — X eyes, flat mouth
+        ctx.strokeStyle = eyeColor; ctx.lineWidth = 3 * s; ctx.lineCap = 'round';
+        [-1, 1].forEach(side => {
+            const ex = side * eyeGap / 2;
+            ctx.beginPath(); ctx.moveTo(ex - 5 * s, fy - 5 * s); ctx.lineTo(ex + 5 * s, fy + 5 * s); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ex + 5 * s, fy - 5 * s); ctx.lineTo(ex - 5 * s, fy + 5 * s); ctx.stroke();
+        });
+        // Flat tilted mouth
+        ctx.fillStyle = eyeColor;
+        ctx.save(); ctx.translate(0, fy + 16 * s); ctx.rotate(-0.08);
+        ctx.fillRect(-15 * s, 0, 30 * s, 4 * s);
+        ctx.restore();
+    }
+
+    ctx.restore();
+}
+
 // ── Share card ──
 function generateShareCard() {
     const canvas = dom.shareCanvas;
@@ -282,12 +406,8 @@ function generateShareCard() {
     ctx.beginPath(); ctx.arc(180, 1500, 250, 0, 6.28); ctx.fill();
     ctx.globalAlpha = 1;
 
-    ctx.font = '280px serif'; ctx.textAlign = 'center';
-    ctx.fillText('🥟', w / 2, 580);
-
-    const moodEmojis = { 'mood-happy': '😊', 'mood-neutral': '😐', 'mood-worried': '😟', 'mood-sad': '😢', 'mood-crying': '😭', 'mood-dead': '💀' };
-    ctx.font = '120px serif';
-    ctx.fillText(moodEmojis[getMoodCls()] || '🥟', w / 2, 740);
+    ctx.textAlign = 'center';
+    drawKhinkali(ctx, w / 2, 480, getMoodIdx());
 
     ctx.fillStyle = '#888'; ctx.font = '600 48px -apple-system, sans-serif';
     ctx.fillText(t('shareToday').toUpperCase(), w / 2, 880);
