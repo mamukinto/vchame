@@ -397,4 +397,41 @@ body {
     transform: scale(0.95);
 }
 
+/* Install hint overlay */
+.install-hint {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.install-hint-content {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 24px;
+    max-width: 300px;
+    text-align: center;
+    border: 1px solid #ffffff15;
+}
+
+.install-hint-content p {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.install-hint-close {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 32px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 /* Wobble/particles/+1 animations handled via Web Animations API in app.js */

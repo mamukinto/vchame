@@ -345,22 +345,46 @@ async function shareCard() {
 
 // ── PWA Install ──
 let deferredPrompt = null;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    dom.installBtn.style.display = 'flex';
 });
+
+// Hide install button if already installed as PWA
+if (isStandalone) dom.installBtn.style.display = 'none';
+
+function getInstallHint() {
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+    const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+    if (isIOS || isSafari) {
+        return lang === 'ka'
+            ? 'დააჭირე ⎙ (Share) → "Add to Home Screen"'
+            : 'Tap ⎙ (Share) → "Add to Home Screen"';
+    }
+    return lang === 'ka'
+        ? 'ბრაუზერის მენიუ → "Install App" ან "Add to Home Screen"'
+        : 'Browser menu → "Install App" or "Add to Home Screen"';
+}
 
 // ── Event listeners ──
 dom.khinkaliZone.addEventListener('pointerdown', (e) => { e.preventDefault(); eat(e); });
 dom.shareBtn.addEventListener('click', shareCard);
 dom.undoBtn.addEventListener('click', undoEat);
 dom.langBtn.addEventListener('click', () => { lang = lang === 'ka' ? 'en' : 'ka'; applyLang(); });
-dom.installBtn?.addEventListener('click', () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(() => { deferredPrompt = null; dom.installBtn.style.display = 'none'; });
+
+dom.installBtn.addEventListener('click', () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => { deferredPrompt = null; dom.installBtn.style.display = 'none'; });
+    } else {
+        dom.installHintText.textContent = getInstallHint();
+        dom.installHint.style.display = 'flex';
+    }
 });
+dom.installHintClose.addEventListener('click', () => { dom.installHint.style.display = 'none'; });
 
 // ── Init ──
 applyLang();
