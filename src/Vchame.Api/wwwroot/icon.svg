@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1a1a2e"/>
+  <ellipse cx="256" cy="290" rx="120" ry="100" fill="#f5e6d3"/>
+  <ellipse cx="256" cy="290" rx="120" ry="100" fill="url(#g)"/>
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fff" stop-opacity="0.2"/>
+    <stop offset="1" stop-color="#000" stop-opacity="0.1"/>
+  </linearGradient></defs>
+  <ellipse cx="256" cy="210" rx="26" ry="22" fill="#e8d5b8"/>
+  <circle cx="230" cy="275" r="8" fill="#4a3728"/>
+  <circle cx="282" cy="275" r="8" fill="#4a3728"/>
+  <circle cx="233" cy="272" r="3" fill="#fff"/>
+  <circle cx="285" cy="272" r="3" fill="#fff"/>
+  <rect x="242" y="300" width="28" height="6" rx="3" fill="#4a3728"/>
+  <text x="256" y="440" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="72" fill="#f5c518">ვჭამე</text>
+</svg>

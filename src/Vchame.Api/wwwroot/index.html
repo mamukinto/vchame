@@ -9,9 +9,12 @@
     <meta property="og:description" content="How many khinkali did you eat today?">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vchame.ge">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥟</text></svg>">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.svg">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -70,5 +73,10 @@
 
     <canvas id="shareCanvas" width="1080" height="1920" style="display:none"></canvas>
     <script src="/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
 </body>
 </html>
