@@ -13,6 +13,7 @@ const i18n = {
         shareKhinkali: 'ხინკალი', shareWeek: 'ამ კვირას',
         shareMonth: 'ამ თვეში', shareAll: 'სულ',
         shareWatermark: 'დათვალე შენი ხინკალი',
+        undo: 'წაშალე ბოლო',
         moods: [
             { max: 0, text: 'მშიერი ხარ?' }, { max: 3, text: 'კარგი დასაწყისი!' },
             { max: 8, text: 'ნორმალური ტემპი' }, { max: 15, text: 'შენელდი ცოტა...' },
@@ -28,6 +29,7 @@ const i18n = {
         shareKhinkali: 'KHINKALI', shareWeek: 'THIS WEEK',
         shareMonth: 'THIS MONTH', shareAll: 'ALL TIME',
         shareWatermark: 'count your khinkali',
+        undo: 'undo last',
         moods: [
             { max: 0, text: 'hungry?' }, { max: 3, text: 'good start!' },
             { max: 8, text: 'nice pace' }, { max: 15, text: 'maybe slow down...' },
@@ -46,6 +48,7 @@ function applyLang() {
     i18nEls.forEach(el => el.textContent = t(el.dataset.i18n));
     dom.langBtn.textContent = lang === 'ka' ? 'EN' : 'ქარ';
     dom.shareBtn.lastChild.textContent = ' ' + t('share');
+    dom.undoBtn.lastChild.textContent = ' ' + t('undo');
     if (dom.installBtn) dom.installBtn.lastChild.textContent = ' ' + t('install');
     updateMood();
     updateBanner();
@@ -68,22 +71,42 @@ let globalTotal = 0;
 let globalPeople = 0;
 let currentMoodCls = '';
 
-// ── Pre-built object pools (zero DOM alloc per tap) ──
-const POOL_SIZE = 8;
+// ── Animations via Web Animations API (zero reflow) ──
+const wobbleKeyframes = [
+    { transform: 'rotate(0deg)' },
+    { transform: 'rotate(-8deg)', offset: 0.25 },
+    { transform: 'rotate(8deg)', offset: 0.5 },
+    { transform: 'rotate(-4deg)', offset: 0.75 },
+    { transform: 'rotate(0deg)' },
+];
+const wobbleOpts = { duration: 300, easing: 'ease-in-out' };
+
+const flyKeyframes = (tx, ty) => [
+    { transform: 'translate(0,0) scale(1)', opacity: 1 },
+    { transform: `translate(${tx}px,${ty}px) scale(0)`, opacity: 0 },
+];
+const flyOpts = { duration: 400, fill: 'forwards' };
+
+const floatKeyframes = [
+    { transform: 'translateY(0) scale(1)', opacity: 1 },
+    { transform: 'translateY(-50px) scale(0.5)', opacity: 0 },
+];
+const floatOpts = { duration: 500, fill: 'forwards' };
+
+// ── Pre-built pools ──
+const POOL_SIZE = 6;
 const particlePool = [];
 const plusOnePool = [];
 
 for (let i = 0; i < POOL_SIZE; i++) {
     const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.display = 'none';
+    p.style.cssText = 'position:absolute;width:6px;height:6px;background:#f5e6d3;border-radius:50%;opacity:0;will-change:transform,opacity';
     dom.particles.appendChild(p);
     particlePool.push(p);
 
     const po = document.createElement('div');
-    po.className = 'plus-one';
     po.textContent = '+1';
-    po.style.display = 'none';
+    po.style.cssText = 'position:absolute;font-size:24px;font-weight:800;color:#f5c518;pointer-events:none;opacity:0;will-change:transform,opacity';
     dom.khinkaliZone.appendChild(po);
     plusOnePool.push(po);
 }
@@ -96,23 +119,18 @@ function fireParticles() {
         const p = particlePool[particleIdx++ % POOL_SIZE];
         const angle = Math.random() * 6.28;
         const dist = 30 + Math.random() * 40;
-        p.style.cssText = `display:block;--tx:${Math.cos(angle) * dist}px;--ty:${Math.sin(angle) * dist}px`;
-        // Restart animation by re-adding class
-        p.classList.remove('particle');
-        p.offsetWidth; // minimal reflow — single element only
-        p.classList.add('particle');
+        p.animate(flyKeyframes(Math.cos(angle) * dist, Math.sin(angle) * dist), flyOpts);
     }
 }
 
 function firePlusOne(x, y) {
     const el = plusOnePool[plusOneIdx++ % POOL_SIZE];
-    el.style.cssText = `display:block;left:${x}px;top:${y}px`;
-    el.classList.remove('plus-one');
-    el.offsetWidth;
-    el.classList.add('plus-one');
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.animate(floatKeyframes, floatOpts);
 }
 
-// ── Mood (only update DOM when mood actually changes) ──
+// ── Mood ──
 const MOOD_THRESHOLDS = [3, 8, 15, 25, 40, Infinity];
 const MOOD_CLASSES = ['mood-happy', 'mood-happy', 'mood-neutral', 'mood-worried', 'mood-sad', 'mood-crying', 'mood-dead'];
 
@@ -136,6 +154,16 @@ function updateMood() {
     const mood = t('moods').find(m => todayCount <= m.max);
     dom.moodText.textContent = mood?.text || '';
     if (todayCount > 0) dom.tapHint.style.display = 'none';
+    else dom.tapHint.style.display = '';
+}
+
+function updateAllCounters() {
+    dom.todayCount.textContent = todayCount;
+    dom.weekCount.textContent = weekCount;
+    dom.monthCount.textContent = monthCount;
+    dom.allTimeCount.textContent = allTimeCount.toLocaleString();
+    // Show/hide undo button
+    dom.undoBtn.style.display = todayCount > 0 ? 'flex' : 'none';
 }
 
 function updateBanner() {
@@ -143,7 +171,7 @@ function updateBanner() {
         `<span>🇬🇪</span> <span class="gold">${globalTotal.toLocaleString()}</span> ${t('bannerCounted')} <span class="gold">${globalPeople.toLocaleString()}</span> ${t('bannerBy')}`;
 }
 
-// ── Core tap handler (HOT PATH — must be <1ms) ──
+// ── Core tap handler (HOT PATH — zero reflow) ──
 function eat(e) {
     todayCount++;
     weekCount++;
@@ -151,48 +179,61 @@ function eat(e) {
     allTimeCount++;
     pendingCount++;
 
-    // 1. Update all counters instantly (no network wait)
-    dom.todayCount.textContent = todayCount;
-    dom.weekCount.textContent = weekCount;
-    dom.monthCount.textContent = monthCount;
-    dom.allTimeCount.textContent = allTimeCount.toLocaleString();
-
-    // 2. Update mood (conditional DOM write)
+    updateAllCounters();
     updateMood();
 
-    // 3. Wobble animation via class toggle
-    dom.khinkali.style.animation = 'none';
-    dom.khinkali.offsetHeight; // single element reflow
-    dom.khinkali.style.animation = 'wobble 0.35s ease-in-out';
+    // Wobble — Web Animations API, no reflow
+    dom.khinkali.animate(wobbleKeyframes, wobbleOpts);
 
-    // 4. Particles from pool (no DOM create)
+    // Particles + +1 — Web Animations API, no reflow
     fireParticles();
-
-    // 5. +1 from pool (no DOM create)
     const rect = dom.khinkaliZone.getBoundingClientRect();
     const px = (e.clientX || rect.left + rect.width / 2) - rect.left;
     const py = (e.clientY || rect.top + rect.height / 2) - rect.top;
     firePlusOne(px - 15, py - 30);
 
-    // 6. Haptic
     if (navigator.vibrate) navigator.vibrate(15);
 
-    // 7. Debounced network sync (never blocks UI)
     clearTimeout(syncTimer);
     syncTimer = setTimeout(syncToServer, 800);
 }
 
-// ── Network (all async, never blocks tap) ──
+// ── Undo (minus 1) ──
+function undoEat() {
+    if (todayCount <= 0) return;
+    todayCount--;
+    weekCount--;
+    monthCount--;
+    allTimeCount--;
+    pendingCount--;
+
+    updateAllCounters();
+    updateMood();
+
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncToServer, 800);
+}
+
+// ── Network ──
 async function syncToServer() {
-    if (pendingCount <= 0) return;
+    if (pendingCount === 0) return;
     const count = pendingCount;
     pendingCount = 0;
     try {
-        await fetch('/api/eat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deviceId, count }),
-        });
+        if (count > 0) {
+            await fetch('/api/eat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deviceId, count }),
+            });
+        } else {
+            // Negative = undo, send absolute value with undo flag
+            await fetch('/api/undo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deviceId, count: Math.abs(count) }),
+            });
+        }
         loadStats();
         loadGlobal();
     } catch {
@@ -207,10 +248,7 @@ async function loadStats() {
         weekCount = data.week;
         monthCount = data.month;
         allTimeCount = data.allTime;
-        dom.todayCount.textContent = todayCount;
-        dom.weekCount.textContent = weekCount;
-        dom.monthCount.textContent = monthCount;
-        dom.allTimeCount.textContent = allTimeCount.toLocaleString();
+        updateAllCounters();
         updateMood();
     } catch {}
 }
@@ -316,6 +354,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 // ── Event listeners ──
 dom.khinkaliZone.addEventListener('pointerdown', (e) => { e.preventDefault(); eat(e); });
 dom.shareBtn.addEventListener('click', shareCard);
+dom.undoBtn.addEventListener('click', undoEat);
 dom.langBtn.addEventListener('click', () => { lang = lang === 'ka' ? 'en' : 'ka'; applyLang(); });
 dom.installBtn?.addEventListener('click', () => {
     if (!deferredPrompt) return;

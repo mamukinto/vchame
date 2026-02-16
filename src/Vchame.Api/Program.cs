@@ -41,6 +41,23 @@ api.MapPost("/eat", async (EatRequest req, AppDb db) =>
     return Results.Ok(new { entry.Count });
 });
 
+api.MapPost("/undo", async (EatRequest req, AppDb db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.DeviceId) || req.Count < 1 || req.Count > 100)
+        return Results.BadRequest();
+
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var entry = await db.DailyCounts
+        .FirstOrDefaultAsync(x => x.DeviceId == req.DeviceId && x.Date == today);
+
+    if (entry is null || entry.Count <= 0)
+        return Results.Ok(new { Count = 0 });
+
+    entry.Count = Math.Max(0, entry.Count - req.Count);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { entry.Count });
+});
+
 api.MapGet("/stats/{deviceId}", async (string deviceId, AppDb db) =>
 {
     var now = DateTime.UtcNow;
