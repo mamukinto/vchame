@@ -2,8 +2,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "vchame.db";
-builder.Services.AddDbContext<AppDb>(o => o.UseSqlite($"Data Source={dbPath}"));
+var connStr = Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? throw new InvalidOperationException("DATABASE_URL env var is required");
+builder.Services.AddDbContext<AppDb>(o => o.UseNpgsql(connStr));
 
 var app = builder.Build();
 
