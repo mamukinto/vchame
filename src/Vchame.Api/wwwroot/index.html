@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ვჭამე — Khinkali Counter</title>
+    <meta name="description" content="Count your khinkali. Share your shame. 🥟">
+    <meta property="og:title" content="ვჭამე — Khinkali Counter">
+    <meta property="og:description" content="How many khinkali did you eat today?">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vchame.ge">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥟</text></svg>">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="global-banner" id="globalBanner">
+            <span>🇬🇪</span>
+            <span id="globalCount">...</span> khinkali counted by <span id="globalPeople">...</span> people
+        </div>
+
+        <div class="main">
+            <div class="khinkali-zone" id="khinkaliZone">
+                <div class="khinkali" id="khinkali">
+                    <div class="khinkali-body">
+                        <div class="khinkali-top"></div>
+                        <div class="khinkali-face" id="face">
+                            <div class="eyes">
+                                <div class="eye left"></div>
+                                <div class="eye right"></div>
+                            </div>
+                            <div class="mouth" id="mouth"></div>
+                        </div>
+                    </div>
+                    <div class="tap-hint" id="tapHint">tap me!</div>
+                </div>
+                <div class="bite-particles" id="particles"></div>
+            </div>
+
+            <div class="counter">
+                <div class="count-display">
+                    <span class="count-number" id="todayCount">0</span>
+                    <span class="count-label">today</span>
+                </div>
+                <div class="mood-text" id="moodText">hungry?</div>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-number" id="weekCount">0</span>
+                    <span class="stat-label">this week</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="monthCount">0</span>
+                    <span class="stat-label">this month</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="allTimeCount">0</span>
+                    <span class="stat-label">all time</span>
+                </div>
+            </div>
+
+            <button class="share-btn" id="shareBtn">
+                <span>📸</span> Share to Stories
+            </button>
+        </div>
+    </div>
+
+    <canvas id="shareCanvas" width="1080" height="1920" style="display:none"></canvas>
+    <script src="/app.js"></script>
+</body>
+</html>
