@@ -17,6 +17,13 @@ using (var scope = app.Services.CreateScope())
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+DateOnly GetToday(string? localDate)
+{
+    if (localDate is not null && DateOnly.TryParse(localDate, out var parsed))
+        return parsed;
+    return DateOnly.FromDateTime(DateTime.UtcNow);
+}
+
 var api = app.MapGroup("/api");
 
 api.MapPost("/eat", async (EatRequest req, AppDb db) =>
@@ -24,7 +31,7 @@ api.MapPost("/eat", async (EatRequest req, AppDb db) =>
     if (string.IsNullOrWhiteSpace(req.DeviceId) || req.Count < 1 || req.Count > 100)
         return Results.BadRequest();
 
-    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var today = GetToday(req.LocalDate);
     var entry = await db.DailyCounts
         .FirstOrDefaultAsync(x => x.DeviceId == req.DeviceId && x.Date == today);
 
@@ -47,7 +54,7 @@ api.MapPost("/undo", async (EatRequest req, AppDb db) =>
     if (string.IsNullOrWhiteSpace(req.DeviceId) || req.Count < 1 || req.Count > 100)
         return Results.BadRequest();
 
-    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var today = GetToday(req.LocalDate);
     var entry = await db.DailyCounts
         .FirstOrDefaultAsync(x => x.DeviceId == req.DeviceId && x.Date == today);
 
@@ -59,12 +66,12 @@ api.MapPost("/undo", async (EatRequest req, AppDb db) =>
     return Results.Ok(new { entry.Count });
 });
 
-api.MapGet("/stats/{deviceId}", async (string deviceId, AppDb db) =>
+api.MapGet("/stats/{deviceId}", async (string deviceId, string? localDate, AppDb db) =>
 {
-    var now = DateTime.UtcNow;
-    var today = DateOnly.FromDateTime(now);
-    var weekStart = today.AddDays(-(int)now.DayOfWeek + (int)DayOfWeek.Monday);
-    if (now.DayOfWeek == DayOfWeek.Sunday) weekStart = weekStart.AddDays(-7);
+    var today = GetToday(localDate);
+    var dow = today.DayOfWeek;
+    var weekStart = today.AddDays(-(int)dow + (int)DayOfWeek.Monday);
+    if (dow == DayOfWeek.Sunday) weekStart = weekStart.AddDays(-7);
     var monthStart = new DateOnly(today.Year, today.Month, 1);
 
     var counts = await db.DailyCounts
@@ -119,4 +126,4 @@ public class DailyCount
     public int Count { get; set; }
 }
 
-public record EatRequest(string DeviceId, int Count);
+public record EatRequest(string DeviceId, int Count, string? LocalDate = null);

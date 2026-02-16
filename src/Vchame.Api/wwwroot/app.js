@@ -215,6 +215,11 @@ function undoEat() {
 }
 
 // ── Network ──
+function localDate() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 async function syncToServer() {
     if (pendingCount === 0) return;
     const count = pendingCount;
@@ -224,14 +229,14 @@ async function syncToServer() {
             await fetch('/api/eat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deviceId, count }),
+                body: JSON.stringify({ deviceId, count, localDate: localDate() }),
             });
         } else {
             // Negative = undo, send absolute value with undo flag
             await fetch('/api/undo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deviceId, count: Math.abs(count) }),
+                body: JSON.stringify({ deviceId, count: Math.abs(count), localDate: localDate() }),
             });
         }
         loadStats();
@@ -243,7 +248,7 @@ async function syncToServer() {
 
 async function loadStats() {
     try {
-        const data = await (await fetch(`/api/stats/${deviceId}`)).json();
+        const data = await (await fetch(`/api/stats/${deviceId}?localDate=${localDate()}`)).json();
         todayCount = data.today;
         weekCount = data.week;
         monthCount = data.month;
