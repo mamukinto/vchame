@@ -59,6 +59,9 @@ const deviceId = localStorage.getItem('vchame_device_id') || (() => {
 })();
 
 let todayCount = 0;
+let weekCount = 0;
+let monthCount = 0;
+let allTimeCount = 0;
 let pendingCount = 0;
 let syncTimer = 0;
 let globalTotal = 0;
@@ -143,10 +146,16 @@ function updateBanner() {
 // ── Core tap handler (HOT PATH — must be <1ms) ──
 function eat(e) {
     todayCount++;
+    weekCount++;
+    monthCount++;
+    allTimeCount++;
     pendingCount++;
 
-    // 1. Update counter text (single DOM write)
+    // 1. Update all counters instantly (no network wait)
     dom.todayCount.textContent = todayCount;
+    dom.weekCount.textContent = weekCount;
+    dom.monthCount.textContent = monthCount;
+    dom.allTimeCount.textContent = allTimeCount.toLocaleString();
 
     // 2. Update mood (conditional DOM write)
     updateMood();
@@ -195,10 +204,13 @@ async function loadStats() {
     try {
         const data = await (await fetch(`/api/stats/${deviceId}`)).json();
         todayCount = data.today;
-        dom.todayCount.textContent = data.today;
-        dom.weekCount.textContent = data.week;
-        dom.monthCount.textContent = data.month;
-        dom.allTimeCount.textContent = data.allTime.toLocaleString();
+        weekCount = data.week;
+        monthCount = data.month;
+        allTimeCount = data.allTime;
+        dom.todayCount.textContent = todayCount;
+        dom.weekCount.textContent = weekCount;
+        dom.monthCount.textContent = monthCount;
+        dom.allTimeCount.textContent = allTimeCount.toLocaleString();
         updateMood();
     } catch {}
 }
