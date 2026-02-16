@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<AppDb>(o =>
-    o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=vchame.db"));
+var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "vchame.db";
+builder.Services.AddDbContext<AppDb>(o => o.UseSqlite($"Data Source={dbPath}"));
 
 var app = builder.Build();
 
