@@ -1,6 +1,7 @@
-const CACHE = 'vchame-v7';
+const CACHE = 'vchame-v9';
 const ASSETS = [
     '/',
+    '/stats.html',
     '/style.css',
     '/app.js',
     '/icon.svg',
