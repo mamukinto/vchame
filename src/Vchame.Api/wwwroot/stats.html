@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>სტატისტიკა — ვჭამე</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --accent: #e94560;
+            --text: #eee;
+            --text-dim: #888;
+            --gold: #f5c518;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100dvh;
+        }
+        #app {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 0 0 48px;
+        }
+
+        /* Top bar */
+        .top-bar {
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #ffffff10;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .back-btn {
+            background: none;
+            border: 1px solid #ffffff20;
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .top-title {
+            font-size: 16px;
+            font-weight: 700;
+            flex: 1;
+        }
+        .lang-btn {
+            background: none;
+            border: 1px solid #ffffff20;
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 32px 20px 24px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        .hero p {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Section */
+        .section {
+            padding: 0 16px 24px;
+        }
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        /* Global summary row */
+        .global-summary {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .summary-card {
+            flex: 1;
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 16px 12px;
+            text-align: center;
+            border: 1px solid #ffffff08;
+        }
+        .summary-number {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .summary-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Dish cards */
+        .dish-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 10px;
+            border: 1px solid #ffffff08;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .dish-card img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .dish-card-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .dish-card-name {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .dish-stats-row {
+            display: flex;
+            gap: 12px;
+        }
+        .dish-stat {
+            text-align: center;
+        }
+        .dish-stat-num {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text);
+        }
+        .dish-stat-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Global dish bar */
+        .global-dish-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .global-dish-row img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .global-dish-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .global-dish-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .global-dish-count {
+            color: var(--gold);
+            font-weight: 800;
+        }
+        .bar-track {
+            height: 6px;
+            background: #ffffff10;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--accent));
+            border-radius: 99px;
+            transition: width 0.6s ease;
+        }
+
+        .empty-state {
+            color: var(--text-dim);
+            font-size: 14px;
+            font-style: italic;
+            padding: 12px 0;
+        }
+
+        .cta-btn {
+            display: block;
+            margin: 8px 16px 0;
+            background: linear-gradient(135deg, #833ab4, #e94560, #f5c518);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="top-bar">
+        <a href="/" class="back-btn">← <span id="backLabel">უკან</span></a>
+        <span class="top-title" id="pageTitle">სტატისტიკა</span>
+        <button class="lang-btn" id="langBtn">EN</button>
+    </div>
+
+    <div class="hero">
+        <h1>ვჭამე.ge</h1>
+        <p id="heroText">დათვალე რამდენი ქართული საჭმელი შეჭამე.<br>გაუზიარე სიძვა მეგობრებს.</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title" id="personalTitle">შენი სტატისტიკა</div>
+        <div id="personalCards"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title" id="globalTitle">გლობალური სტატისტიკა</div>
+        <div class="global-summary">
+            <div class="summary-card">
+                <div class="summary-number" id="globalTotal">—</div>
+                <div class="summary-label" id="globalTotalLabel">სულ საჭმელი</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number" id="globalPeople">—</div>
+                <div class="summary-label" id="globalPeopleLabel">ადამიანი</div>
+            </div>
+        </div>
+        <div id="globalDishes"></div>
+    </div>
+
+    <a href="/" class="cta-btn" id="ctaBtn">🍽️ დათვლა დაიწყე</a>
+</div>
+
+<script>
+const dishes = [
+    { key: 'khinkali', ka: 'ხინკალი', en: 'Khinkali' },
+    { key: 'khachapuri', ka: 'ხაჭაპური', en: 'Khachapuri' },
+    { key: 'qababi', ka: 'ქაბაბი', en: 'Qababi' },
+    { key: 'lobiani', ka: 'ლობიანი', en: 'Lobiani' },
+];
+
+const i18n = {
+    ka: {
+        back: 'უკან', pageTitle: 'სტატისტიკა',
+        hero: 'დათვალე რამდენი ქართული საჭმელი შეჭამე.<br>გაუზიარე სიძვა მეგობრებს.',
+        personal: 'შენი სტატისტიკა', global: 'გლობალური სტატისტიკა',
+        totalFood: 'სულ საჭმელი', people: 'ადამიანი',
+        today: 'დღეს', week: 'კვირა', allTime: 'სულ',
+        noneEaten: 'ჯერ არაფერი', cta: '🍽️ დათვლა დაიწყე',
+    },
+    en: {
+        back: 'Back', pageTitle: 'Stats',
+        hero: 'Count your Georgian food.<br>Share the shame with friends.',
+        personal: 'Your Stats', global: 'Global Stats',
+        totalFood: 'total eaten', people: 'people',
+        today: 'today', week: 'week', allTime: 'all time',
+        noneEaten: 'nothing yet', cta: '🍽️ Start Counting',
+    },
+};
+
+let lang = localStorage.getItem('vchame_lang') || 'ka';
+const deviceId = localStorage.getItem('vchame_device_id') || '';
+
+function t(k) { return i18n[lang][k]; }
+
+function localDate() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function applyLang() {
+    localStorage.setItem('vchame_lang', lang);
+    document.documentElement.lang = lang;
+    document.getElementById('langBtn').textContent = lang === 'ka' ? 'EN' : 'ქარ';
+    document.getElementById('backLabel').textContent = t('back');
+    document.getElementById('pageTitle').textContent = t('pageTitle');
+    document.getElementById('heroText').innerHTML = t('hero');
+    document.getElementById('personalTitle').textContent = t('personal');
+    document.getElementById('globalTitle').textContent = t('global');
+    document.getElementById('globalTotalLabel').textContent = t('totalFood');
+    document.getElementById('globalPeopleLabel').textContent = t('people');
+    document.getElementById('ctaBtn').textContent = t('cta');
+}
+
+async function loadPersonal() {
+    if (!deviceId) {
+        document.getElementById('personalCards').innerHTML = `<p class="empty-state">${t('noneEaten')}</p>`;
+        return;
+    }
+    try {
+        const data = await (await fetch(`/api/stats/${deviceId}?localDate=${localDate()}`)).json();
+        const container = document.getElementById('personalCards');
+        const hasSomething = data.dishes && Object.values(data.dishes).some(d => d.allTime > 0);
+        if (!hasSomething) {
+            container.innerHTML = `<p class="empty-state">${t('noneEaten')}</p>`;
+            return;
+        }
+        container.innerHTML = dishes.map(dish => {
+            const s = data.dishes?.[dish.key] || { today: 0, week: 0, allTime: 0 };
+            if (s.allTime === 0) return '';
+            return `
+            <div class="dish-card">
+                <img src="/images/${dish.key}.png" alt="">
+                <div class="dish-card-body">
+                    <div class="dish-card-name">${dish[lang]}</div>
+                    <div class="dish-stats-row">
+                        <div class="dish-stat">
+                            <div class="dish-stat-num">${s.today}</div>
+                            <div class="dish-stat-label">${t('today')}</div>
+                        </div>
+                        <div class="dish-stat">
+                            <div class="dish-stat-num">${s.week}</div>
+                            <div class="dish-stat-label">${t('week')}</div>
+                        </div>
+                        <div class="dish-stat">
+                            <div class="dish-stat-num">${s.allTime}</div>
+                            <div class="dish-stat-label">${t('allTime')}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch {}
+}
+
+async function loadGlobal() {
+    try {
+        const data = await (await fetch('/api/global')).json();
+        document.getElementById('globalTotal').textContent = (data.total || 0).toLocaleString();
+        document.getElementById('globalPeople').textContent = (data.people || 0).toLocaleString();
+
+        const byDish = {};
+        (data.byDish || []).forEach(d => byDish[d.dish] = d.count);
+        const maxCount = Math.max(1, ...Object.values(byDish));
+
+        document.getElementById('globalDishes').innerHTML = dishes.map(dish => {
+            const count = byDish[dish.key] || 0;
+            const pct = Math.round((count / maxCount) * 100);
+            return `
+            <div class="global-dish-row">
+                <img src="/images/${dish.key}.png" alt="">
+                <div class="global-dish-info">
+                    <div class="global-dish-name">
+                        <span>${dish[lang]}</span>
+                        <span class="global-dish-count">${count.toLocaleString()}</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width:${pct}%"></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch {}
+}
+
+document.getElementById('langBtn').addEventListener('click', () => {
+    lang = lang === 'ka' ? 'en' : 'ka';
+    applyLang();
+    loadPersonal();
+    loadGlobal();
+});
+
+applyLang();
+loadPersonal();
+loadGlobal();
+</script>
+</body>
+</html>

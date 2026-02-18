@@ -32,8 +32,8 @@ const dishes = [
     },
     {
         key: 'khachapuri',
-        ka: { name: 'ხაჭაპური', unit: 'ცალი' },
-        en: { name: 'Khachapuri', unit: 'pcs' },
+        ka: { name: 'ხაჭაპური', unit: 'ნაჭერი' },
+        en: { name: 'Khachapuri', unit: 'slices' },
         moods: {
             ka: [
                 { max: 0, text: 'ყველი დაგავიწყდა?' },
@@ -82,8 +82,8 @@ const dishes = [
     },
     {
         key: 'lobiani',
-        ka: { name: 'ლობიანი', unit: 'ცალი' },
-        en: { name: 'Lobiani', unit: 'pcs' },
+        ka: { name: 'ლობიანი', unit: 'ნაჭერი' },
+        en: { name: 'Lobiani', unit: 'slices' },
         moods: {
             ka: [
                 { max: 0, text: 'ლობიოს არ გჭირდება?' },
@@ -140,6 +140,7 @@ function applyLang() {
     i18nEls.forEach(el => el.textContent = t(el.dataset.i18n));
     dom.langBtn.textContent = lang === 'ka' ? 'EN' : 'ქარ';
     updateMood();
+    updateDishHint();
     updateBanner();
 }
 
@@ -267,6 +268,12 @@ function updateBanner() {
         `<span>🇬🇪</span> <span class="gold">${globalTotal.toLocaleString()}</span> ${t('bannerCounted')} <span class="gold">${globalPeople.toLocaleString()}</span> ${t('bannerBy')}`;
 }
 
+// ── Dish hint ──
+function updateDishHint() {
+    const dish = dishes.find(d => d.key === currentDish);
+    dom.dishHint.textContent = `${dish[lang].name} · ${dish[lang].unit}`;
+}
+
 // ── Dish switching ──
 function switchDish(dishKey) {
     if (dishKey === currentDish) return;
@@ -281,9 +288,10 @@ function switchDish(dishKey) {
     // Update dish image
     dom.dishImage.src = `/images/${dishKey}.png`;
 
-    // Update counters and mood
+    // Update counters, mood and hint
     updateAllCounters();
     updateMood();
+    updateDishHint();
 }
 
 // ── Core tap handler (HOT PATH — zero reflow) ──

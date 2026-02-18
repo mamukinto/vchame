@@ -127,7 +127,18 @@ api.MapGet("/global", async (AppDb db) =>
 {
     var total = await db.DailyCounts.SumAsync(x => x.Count);
     var devices = await db.DailyCounts.Select(x => x.DeviceId).Distinct().CountAsync();
-    return Results.Ok(new { total, people = devices });
+    var byDish = await db.DailyCounts
+        .GroupBy(x => x.DishType)
+        .Select(g => new { dish = g.Key, count = g.Sum(x => x.Count) })
+        .ToListAsync();
+    return Results.Ok(new { total, people = devices, byDish });
+});
+
+app.MapGet("/stats", context =>
+{
+    context.Response.ContentType = "text/html";
+    return context.Response.SendFileAsync(
+        Path.Combine(app.Environment.WebRootPath, "stats.html"));
 });
 
 app.MapFallback(context =>
