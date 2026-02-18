@@ -1,5 +1,15 @@
-const CACHE = 'vchame-v6';
-const ASSETS = ['/', '/style.css', '/app.js', '/icon.svg', '/manifest.json'];
+const CACHE = 'vchame-v7';
+const ASSETS = [
+    '/',
+    '/style.css',
+    '/app.js',
+    '/icon.svg',
+    '/manifest.json',
+    '/images/khinkali.png',
+    '/images/khachapuri.png',
+    '/images/qababi.png',
+    '/images/lobiani.png',
+];
 
 self.addEventListener('install', (e) => {
     e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

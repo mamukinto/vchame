@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connStr = Environment.GetEnvironmentVariable("DATABASE_URL")
-    ?? throw new InvalidOperationException("DATABASE_URL env var is required");
-builder.Services.AddDbContext<AppDb>(o => o.UseNpgsql(connStr));
+var connStr = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (connStr is not null)
+    builder.Services.AddDbContext<AppDb>(o => o.UseNpgsql(connStr));
+else
+    builder.Services.AddDbContext<AppDb>(o => o.UseInMemoryDatabase("vchame"));
 
 var app = builder.Build();
 
@@ -12,6 +14,24 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDb>();
     db.Database.EnsureCreated();
+    if (connStr is not null)
+    {
+        // Idempotent migration: add DishType column and update PK if needed
+        await db.Database.ExecuteSqlRawAsync("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'DailyCounts' AND column_name = 'DishType'
+                ) THEN
+                    ALTER TABLE "DailyCounts" ADD COLUMN "DishType" text NOT NULL DEFAULT 'khinkali';
+                    ALTER TABLE "DailyCounts" DROP CONSTRAINT "PK_DailyCounts";
+                    ALTER TABLE "DailyCounts" ADD CONSTRAINT "PK_DailyCounts"
+                        PRIMARY KEY ("DeviceId", "Date", "DishType");
+                END IF;
+            END $$;
+            """);
+    }
 }
 
 app.UseDefaultFiles();
@@ -31,13 +51,14 @@ api.MapPost("/eat", async (EatRequest req, AppDb db) =>
     if (string.IsNullOrWhiteSpace(req.DeviceId) || req.Count < 1 || req.Count > 100)
         return Results.BadRequest();
 
+    var dishType = string.IsNullOrWhiteSpace(req.DishType) ? "khinkali" : req.DishType;
     var today = GetToday(req.LocalDate);
     var entry = await db.DailyCounts
-        .FirstOrDefaultAsync(x => x.DeviceId == req.DeviceId && x.Date == today);
+        .FirstOrDefaultAsync(x => x.DeviceId == req.DeviceId && x.Date == today && x.DishType == dishType);
 
     if (entry is null)
     {
-        entry = new DailyCount { DeviceId = req.DeviceId, Date = today, Count = req.Count };
+        entry = new DailyCount { DeviceId = req.DeviceId, Date = today, DishType = dishType, Count = req.Count };
         db.DailyCounts.Add(entry);
     }
     else
@@ -54,9 +75,10 @@ api.MapPost("/undo", async (EatRequest req, AppDb db) =>
     if (string.IsNullOrWhiteSpace(req.DeviceId) || req.Count < 1 || req.Count > 100)
         return Results.BadRequest();
 
+    var dishType = string.IsNullOrWhiteSpace(req.DishType) ? "khinkali" : req.DishType;
     var today = GetToday(req.LocalDate);
     var entry = await db.DailyCounts
-        .FirstOrDefaultAsync(x => x.DeviceId == req.DeviceId && x.Date == today);
+        .FirstOrDefaultAsync(x => x.DeviceId == req.DeviceId && x.Date == today && x.DishType == dishType);
 
     if (entry is null || entry.Count <= 0)
         return Results.Ok(new { Count = 0 });
@@ -78,13 +100,26 @@ api.MapGet("/stats/{deviceId}", async (string deviceId, string? localDate, AppDb
         .Where(x => x.DeviceId == deviceId)
         .ToListAsync();
 
+    var dishes = counts
+        .GroupBy(x => x.DishType)
+        .ToDictionary(
+            g => g.Key,
+            g => new
+            {
+                today = g.Where(x => x.Date == today).Sum(x => x.Count),
+                week = g.Where(x => x.Date >= weekStart).Sum(x => x.Count),
+                month = g.Where(x => x.Date >= monthStart).Sum(x => x.Count),
+                allTime = g.Sum(x => x.Count),
+            });
+
     return Results.Ok(new
     {
         today = counts.Where(x => x.Date == today).Sum(x => x.Count),
         week = counts.Where(x => x.Date >= weekStart).Sum(x => x.Count),
         month = counts.Where(x => x.Date >= monthStart).Sum(x => x.Count),
         allTime = counts.Sum(x => x.Count),
-        days = counts.Count
+        days = counts.Select(x => x.Date).Distinct().Count(),
+        dishes
     });
 });
 
@@ -113,7 +148,7 @@ public class AppDb : DbContext
     {
         m.Entity<DailyCount>(e =>
         {
-            e.HasKey(x => new { x.DeviceId, x.Date });
+            e.HasKey(x => new { x.DeviceId, x.Date, x.DishType });
             e.HasIndex(x => x.DeviceId);
         });
     }
@@ -123,7 +158,8 @@ public class DailyCount
 {
     public required string DeviceId { get; set; }
     public DateOnly Date { get; set; }
+    public string DishType { get; set; } = "khinkali";
     public int Count { get; set; }
 }
 
-public record EatRequest(string DeviceId, int Count, string? LocalDate = null);
+public record EatRequest(string DeviceId, int Count, string DishType = "khinkali", string? LocalDate = null);

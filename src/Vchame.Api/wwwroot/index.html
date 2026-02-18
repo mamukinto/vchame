@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ვჭამე — Khinkali Counter</title>
-    <meta name="description" content="Count your khinkali. Share your shame.">
-    <meta property="og:title" content="ვჭამე — Khinkali Counter">
-    <meta property="og:description" content="How many khinkali did you eat today?">
+    <title>ვჭამე — Georgian Food Counter</title>
+    <meta name="description" content="Count your Georgian food. Share your shame.">
+    <meta property="og:title" content="ვჭამე — Georgian Food Counter">
+    <meta property="og:description" content="How much Georgian food did you eat today?">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vchame.ge">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -25,27 +25,27 @@
         </div>
 
         <div class="main">
-            <div class="khinkali-zone" id="khinkaliZone">
-                <div class="khinkali" id="khinkali">
-                    <div class="khinkali-body">
-                        <div class="khinkali-top"></div>
-                        <div class="khinkali-face" id="face">
-                            <div class="eyes">
-                                <div class="eye left"></div>
-                                <div class="eye right"></div>
-                            </div>
-                            <div class="mouth" id="mouth"></div>
+            <div class="dish-zone" id="dishZone">
+                <div class="dish-container" id="dishContainer">
+                    <!-- Dish image (faceless body) -->
+                    <img id="dishImage" class="dish-image" src="/images/khinkali.png" alt="">
+                    <!-- Face overlay (7 mood states) -->
+                    <div class="dish-face" id="face">
+                        <div class="eyes">
+                            <div class="eye left"></div>
+                            <div class="eye right"></div>
                         </div>
+                        <div class="mouth" id="mouth"></div>
                     </div>
-                    <div class="tap-hint" id="tapHint" data-i18n="tapHint">შემეხე!</div>
                 </div>
+                <div class="tap-hint" id="tapHint" data-i18n="tapHint">შემეხე!</div>
                 <div class="bite-particles" id="particles"></div>
             </div>
 
             <div class="counter">
                 <div class="count-display">
                     <span class="count-number" id="todayCount">0</span>
-                    <span class="count-label" data-i18n="today">დღეს</span>
+                    <span class="count-label" id="countLabel" data-i18n="today">დღეს</span>
                 </div>
                 <div class="mood-text" id="moodText"></div>
             </div>
@@ -67,13 +67,13 @@
 
             <div class="actions">
                 <button class="undo-btn" id="undoBtn" style="display:none">
-                    <span>↩</span> წაშალე ბოლო
+                    <span>↩</span> <span data-i18n="undo">წაშალე ბოლო</span>
                 </button>
                 <button class="share-btn" id="shareBtn">
-                    <span>📸</span> გაზიარება
+                    <span>📸</span> <span data-i18n="share">გაზიარება</span>
                 </button>
                 <button class="install-btn" id="installBtn">
-                    <span>📲</span> დააინსტალირე
+                    <span>📲</span> <span data-i18n="install">დააინსტალირე</span>
                 </button>
                 <div class="install-hint" id="installHint" style="display:none">
                     <div class="install-hint-content">
@@ -81,6 +81,26 @@
                         <button class="install-hint-close" id="installHintClose">OK</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- Dish tabs (bottom navigation) -->
+            <div class="dish-tabs" id="dishTabs">
+                <button class="dish-tab active" data-dish="khinkali">
+                    <img src="/images/khinkali.png" class="dish-tab-icon" alt="">
+                    <span class="dish-tab-label" data-i18n="dish_khinkali">ხინკალი</span>
+                </button>
+                <button class="dish-tab" data-dish="khachapuri">
+                    <img src="/images/khachapuri.png" class="dish-tab-icon" alt="">
+                    <span class="dish-tab-label" data-i18n="dish_khachapuri">ხაჭაპური</span>
+                </button>
+                <button class="dish-tab" data-dish="qababi">
+                    <img src="/images/qababi.png" class="dish-tab-icon" alt="">
+                    <span class="dish-tab-label" data-i18n="dish_qababi">ქაბაბი</span>
+                </button>
+                <button class="dish-tab" data-dish="lobiani">
+                    <img src="/images/lobiani.png" class="dish-tab-icon" alt="">
+                    <span class="dish-tab-label" data-i18n="dish_lobiani">ლობიანი</span>
+                </button>
             </div>
         </div>
     </div>
