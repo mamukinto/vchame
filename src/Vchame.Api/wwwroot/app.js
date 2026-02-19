@@ -399,7 +399,6 @@ async function syncToServer() {
                 }),
             });
         } else {
-            // Negative = undo, send absolute value with undo flag
             await fetch('/api/undo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -411,7 +410,6 @@ async function syncToServer() {
                 }),
             });
         }
-        loadStats();
         loadGlobal();
     } catch {
         pendingCount += count;
@@ -881,6 +879,11 @@ dom.installBtn.addEventListener('click', () => {
     }
 });
 dom.installHintClose.addEventListener('click', () => { dom.installHint.style.display = 'none'; });
+
+// Reconcile with server when user returns to the app
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && pendingCount === 0) loadStats();
+});
 
 // ── Init ──
 applyLang();
