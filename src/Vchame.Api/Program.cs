@@ -88,6 +88,17 @@ api.MapPost("/undo", async (EatRequest req, AppDb db) =>
     return Results.Ok(new { entry.Count });
 });
 
+api.MapPost("/clear", async (EatRequest req, AppDb db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.DeviceId)) return Results.BadRequest();
+    var dishType = string.IsNullOrWhiteSpace(req.DishType) ? "khinkali" : req.DishType;
+    var today = GetToday(req.LocalDate);
+    var entry = await db.DailyCounts
+        .FirstOrDefaultAsync(x => x.DeviceId == req.DeviceId && x.Date == today && x.DishType == dishType);
+    if (entry is not null) { entry.Count = 0; await db.SaveChangesAsync(); }
+    return Results.Ok(new { Count = 0 });
+});
+
 api.MapGet("/stats/{deviceId}", async (string deviceId, string? localDate, AppDb db) =>
 {
     var today = GetToday(localDate);

@@ -116,7 +116,7 @@ const i18n = {
         bannerBy: 'ადამიანის მიერ', shareToday: 'დღეს ვჭამე',
         shareWeek: 'ამ კვირას', shareMonth: 'ამ თვეში', shareAll: 'სულ',
         shareWatermark: 'დათვალე შენი საჭმელი',
-        undo: 'წაშალე ბოლო',
+        undo: 'წაშალე ბოლო', clear: 'გასუფთავება',
         shareTitle: 'დღევანდელი ზიანი',
         statsBtn: 'სტატ.',
         // stats panel
@@ -139,7 +139,7 @@ const i18n = {
         bannerBy: 'people', shareToday: 'TODAY I ATE',
         shareWeek: 'THIS WEEK', shareMonth: 'THIS MONTH', shareAll: 'ALL TIME',
         shareWatermark: 'count your food',
-        undo: 'undo last',
+        undo: 'undo last', clear: 'clear all',
         shareTitle: 'TODAY\'S DAMAGE',
         statsBtn: 'Stats',
         // stats panel
@@ -298,8 +298,8 @@ function updateAllCounters() {
     dom.weekCount.textContent = stats.week;
     dom.monthCount.textContent = stats.month;
     dom.allTimeCount.textContent = stats.allTime.toLocaleString();
-    // Show/hide undo button
-    dom.undoBtn.style.display = stats.today > 0 ? 'flex' : 'none';
+    // Show/hide undo row
+    dom.undoRow.style.display = stats.today > 0 ? 'flex' : 'none';
 }
 
 function updateBanner() {
@@ -376,6 +376,26 @@ function undoEat() {
 
     clearTimeout(syncTimer);
     syncTimer = setTimeout(syncToServer, 800);
+}
+
+// ── Clear today's count for current dish ──
+function clearDish() {
+    const stats = dishCounts[currentDish];
+    if (stats.today <= 0) return;
+    const count = stats.today;
+    stats.week -= count;
+    stats.month -= count;
+    stats.allTime -= count;
+    stats.today = 0;
+    pendingCount = 0;
+    clearTimeout(syncTimer);
+    updateAllCounters();
+    updateMood();
+    fetch('/api/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, dishType: currentDish, count: 0, localDate: localDate() }),
+    }).catch(() => {});
 }
 
 // ── Network ──
@@ -829,6 +849,7 @@ function getInstallHint() {
 dom.dishZone.addEventListener('pointerdown', (e) => { e.preventDefault(); eat(e); });
 dom.shareBtn.addEventListener('click', openShareModal);
 dom.undoBtn.addEventListener('click', undoEat);
+dom.clearBtn.addEventListener('click', clearDish);
 dom.langBtn.addEventListener('click', () => { lang = lang === 'ka' ? 'en' : 'ka'; applyLang(); });
 
 // Stats panel
