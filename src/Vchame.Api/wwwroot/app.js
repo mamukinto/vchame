@@ -118,6 +118,18 @@ const i18n = {
         shareWatermark: 'დათვალე შენი საჭმელი',
         undo: 'წაშალე ბოლო',
         shareTitle: 'დღევანდელი ზიანი',
+        // stats panel
+        statsBack: 'უკან', statsTitle: 'სტატისტიკა',
+        statsPersonal: 'შენი სტატისტიკა', statsGlobal: 'გლობალური სტატისტიკა',
+        statsTotalFood: 'სულ საჭმელი', statsPeople: 'ადამიანი',
+        statsNone: 'ჯერ არაფერი',
+        // share modal
+        smTitle: '📸 გაზიარება',
+        smLocationLabel: '📍 მდებარეობა',
+        smLocationPlaceholder: 'რესტორანი, ქალაქი...',
+        smPhotoLabel: '🖼 ფოტო (სურვილისამებრ)',
+        shareAddPhoto: '+ ფოტოს დამატება', sharePhotoRemove: '✕ წაშლა',
+        shareGenerate: '📸 გენერირება',
     },
     en: {
         tapHint: 'tap me!', today: 'today', thisWeek: 'this week',
@@ -128,6 +140,18 @@ const i18n = {
         shareWatermark: 'count your food',
         undo: 'undo last',
         shareTitle: 'TODAY\'S DAMAGE',
+        // stats panel
+        statsBack: 'Back', statsTitle: 'Stats',
+        statsPersonal: 'Your Stats', statsGlobal: 'Global Stats',
+        statsTotalFood: 'total eaten', statsPeople: 'people',
+        statsNone: 'nothing yet',
+        // share modal
+        smTitle: '📸 Share',
+        smLocationLabel: '📍 Location',
+        smLocationPlaceholder: 'Restaurant, city...',
+        smPhotoLabel: '🖼 Photo (optional)',
+        shareAddPhoto: '+ Add photo', sharePhotoRemove: '✕ Remove',
+        shareGenerate: '📸 Generate card',
     },
 };
 
@@ -139,9 +163,21 @@ function applyLang() {
     document.documentElement.lang = lang;
     i18nEls.forEach(el => el.textContent = t(el.dataset.i18n));
     dom.langBtn.textContent = lang === 'ka' ? 'EN' : 'ქარ';
+    dom.statsPanelLangBtn.textContent = lang === 'ka' ? 'EN' : 'ქარ';
+    dom.statsPanelBackLabel.textContent = t('statsBack');
+    dom.statsPanelTitle.textContent = t('statsTitle');
+    dom.spPersonalTitle.textContent = t('statsPersonal');
+    dom.spGlobalTitle.textContent = t('statsGlobal');
+    dom.spGlobalTotalLabel.textContent = t('statsTotalFood');
+    dom.spGlobalPeopleLabel.textContent = t('statsPeople');
+    dom.smTitle.textContent = t('smTitle');
+    dom.smLocationLabel.textContent = t('smLocationLabel');
+    dom.smPhotoLabel.textContent = t('smPhotoLabel');
+    dom.shareLocation.placeholder = t('smLocationPlaceholder');
     updateMood();
     updateDishHint();
     updateBanner();
+    if (dom.statsPanel.classList.contains('open')) renderStatsPanel();
 }
 
 // ── State ──
@@ -162,6 +198,7 @@ let pendingCount = 0;
 let syncTimer = 0;
 let globalTotal = 0;
 let globalPeople = 0;
+let globalByDish = [];
 let currentMoodCls = '';
 
 // ── Animations via Web Animations API (zero reflow) ──
@@ -402,6 +439,7 @@ async function loadGlobal() {
         const data = await (await fetch('/api/global')).json();
         globalTotal = data.total;
         globalPeople = data.people;
+        globalByDish = data.byDish || [];
         updateBanner();
     } catch {}
 }
@@ -504,11 +542,57 @@ async function drawDishWithMood(ctx, dishKey, count, x, y, width, height) {
     ctx.restore();
 }
 
+// ── Polaroid frame ──
+function drawPolaroid(ctx, img, x, y, w, h, caption) {
+    ctx.save();
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.rotate(-0.02); // subtle tilt
+    ctx.translate(-(x + w / 2), -(y + h / 2));
+
+    // Shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 50;
+    ctx.shadowOffsetY = 24;
+
+    // White frame
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    // Photo inside (cover-fit, clipped)
+    const pad = 30, botPad = 100;
+    const px = x + pad, py = y + pad, pw = w - pad * 2, ph = h - pad - botPad;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(px, py, pw, ph); ctx.clip();
+    const sx = pw / img.naturalWidth, sy = ph / img.naturalHeight;
+    const sc = Math.max(sx, sy);
+    const dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+    ctx.drawImage(img, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
+    ctx.restore();
+
+    // Caption in white area below photo
+    if (caption) {
+        ctx.fillStyle = '#555';
+        ctx.font = '500 28px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        // Truncate if too long
+        const maxW = w - pad * 2;
+        let txt = '📍 ' + caption;
+        while (ctx.measureText(txt).width > maxW && txt.length > 4) {
+            txt = txt.slice(0, -4) + '...';
+        }
+        ctx.fillText(txt, x + w / 2, y + h - 30);
+    }
+
+    ctx.restore();
+}
+
 // ── Share card (multi-dish) ──
-async function generateShareCard() {
+async function generateShareCard(locationText = '', photoImg = null) {
     const canvas = dom.shareCanvas;
     const ctx = canvas.getContext('2d');
     const w = 1080, h = 1920;
+    const hasPhoto = !!photoImg;
 
     // Background gradient
     const grad = ctx.createLinearGradient(0, 0, w, h);
@@ -528,85 +612,102 @@ async function generateShareCard() {
 
     ctx.textAlign = 'center';
 
+    let titleY = 200;
+    let dishStartY = 300;
+
+    // Polaroid at top if photo provided
+    if (hasPhoto) {
+        const pw = 800, ph = 620;
+        const px = (w - pw) / 2;
+        drawPolaroid(ctx, photoImg, px, 60, pw, ph, locationText);
+        titleY = 60 + ph + 80;
+        dishStartY = titleY + 70;
+    }
+
     // Title
     ctx.fillStyle = '#888'; ctx.font = '600 48px -apple-system, sans-serif';
-    ctx.fillText(t('shareTitle').toUpperCase(), w / 2, 200);
+    ctx.fillText(t('shareTitle').toUpperCase(), w / 2, titleY);
 
-    // Draw all dishes that have today count > 0
+    // Active dishes
     const activeDishes = dishes.filter(d => dishCounts[d.key].today > 0);
 
     if (activeDishes.length === 0) {
-        // No dishes eaten today — show message
         ctx.fillStyle = '#666'; ctx.font = 'italic 40px -apple-system, sans-serif';
         ctx.fillText('...', w / 2, h / 2);
         return canvas;
     }
 
-    // Layout dishes in grid (2 columns max)
+    // Layout: 2-col grid, rowStep accounts for dish + name + count below
     const dishSize = 200;
-    const dishGap = 80;
+    const dishGap = 70;
+    const rowStep = dishSize + 140 + dishGap; // 200 body + 140 text below + gap
     const cols = activeDishes.length === 1 ? 1 : 2;
     const rows = Math.ceil(activeDishes.length / cols);
     const gridWidth = cols * dishSize + (cols - 1) * dishGap;
-    const gridHeight = rows * dishSize + (rows - 1) * dishGap;
     const startX = w / 2 - gridWidth / 2 + dishSize / 2;
-    const startY = 300;
 
-    // Draw each dish image + mood + count
     for (let i = 0; i < activeDishes.length; i++) {
         const dish = activeDishes[i];
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = startX + col * (dishSize + dishGap);
-        const y = startY + row * (dishSize + dishGap);
+        const y = dishStartY + row * rowStep;
 
-        // Draw dish with mood face
         await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, x, y, dishSize, dishSize);
 
-        // Dish name below
         ctx.fillStyle = '#eee'; ctx.font = '600 28px -apple-system, sans-serif';
-        const dishName = dish[lang].name;
-        ctx.fillText(dishName, x, y + dishSize / 2 + 40);
+        ctx.fillText(dish[lang].name, x, y + dishSize / 2 + 42);
 
-        // Today's count
-        const cg = ctx.createLinearGradient(x - 50, y + dishSize / 2 + 50, x + 50, y + dishSize / 2 + 120);
+        const cg = ctx.createLinearGradient(x - 50, y + dishSize / 2 + 52, x + 50, y + dishSize / 2 + 122);
         cg.addColorStop(0, '#f5c518'); cg.addColorStop(1, '#e94560');
         ctx.fillStyle = cg; ctx.font = '800 80px -apple-system, sans-serif';
-        ctx.fillText(dishCounts[dish.key].today.toString(), x, y + dishSize / 2 + 120);
+        ctx.fillText(dishCounts[dish.key].today.toString(), x, y + dishSize / 2 + 122);
     }
 
-    // Stats section (combined totals)
+    // Combined totals
     const totalToday = Object.values(dishCounts).reduce((sum, d) => sum + d.today, 0);
     const totalWeek = Object.values(dishCounts).reduce((sum, d) => sum + d.week, 0);
     const totalMonth = Object.values(dishCounts).reduce((sum, d) => sum + d.month, 0);
     const totalAll = Object.values(dishCounts).reduce((sum, d) => sum + d.allTime, 0);
 
-    const statsY = startY + gridHeight + 200;
+    // Bottom of dish grid
+    const dishesBottom = dishStartY + (rows - 1) * rowStep + dishSize / 2 + 122;
+    const statsY = dishesBottom + 100;
+
     ctx.fillStyle = '#888'; ctx.font = '600 36px -apple-system, sans-serif';
     ctx.fillText(t('shareToday').toUpperCase(), w / 2, statsY);
 
-    const cg = ctx.createLinearGradient(w / 2 - 150, statsY + 20, w / 2 + 150, statsY + 140);
-    cg.addColorStop(0, '#f5c518'); cg.addColorStop(1, '#e94560');
-    ctx.fillStyle = cg; ctx.font = '800 140px -apple-system, sans-serif';
+    const cgBig = ctx.createLinearGradient(w / 2 - 150, statsY + 20, w / 2 + 150, statsY + 140);
+    cgBig.addColorStop(0, '#f5c518'); cgBig.addColorStop(1, '#e94560');
+    ctx.fillStyle = cgBig; ctx.font = '800 140px -apple-system, sans-serif';
     ctx.fillText(totalToday.toString(), w / 2, statsY + 130);
 
-    // Small stats cards
-    const stats = [
-        { label: t('shareWeek').toUpperCase(), value: totalWeek },
-        { label: t('shareMonth').toUpperCase(), value: totalMonth },
-        { label: t('shareAll').toUpperCase(), value: totalAll },
-    ];
-    const cardY = statsY + 200, cardW = 280, cardH = 160, gap = 30;
-    const sx = (w - (cardW * 3 + gap * 2)) / 2;
-    stats.forEach((s, i) => {
-        const x = sx + i * (cardW + gap);
-        ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.beginPath();
-        ctx.roundRect(x, cardY, cardW, cardH, 20); ctx.fill();
-        ctx.fillStyle = '#eee'; ctx.font = '800 52px -apple-system, sans-serif';
-        ctx.fillText(s.value.toString(), x + cardW / 2, cardY + 70);
-        ctx.fillStyle = '#666'; ctx.font = '600 22px -apple-system, sans-serif';
-        ctx.fillText(s.label, x + cardW / 2, cardY + 110);
-    });
+    // Small stats cards — only when no photo (photo shifts everything down)
+    if (!hasPhoto) {
+        const stats = [
+            { label: t('shareWeek').toUpperCase(), value: totalWeek },
+            { label: t('shareMonth').toUpperCase(), value: totalMonth },
+            { label: t('shareAll').toUpperCase(), value: totalAll },
+        ];
+        const cardY = statsY + 200, cardW = 280, cardH = 160, gap = 30;
+        const sx = (w - (cardW * 3 + gap * 2)) / 2;
+        stats.forEach((s, i) => {
+            const x = sx + i * (cardW + gap);
+            ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.beginPath();
+            ctx.roundRect(x, cardY, cardW, cardH, 20); ctx.fill();
+            ctx.fillStyle = '#eee'; ctx.font = '800 52px -apple-system, sans-serif';
+            ctx.fillText(s.value.toString(), x + cardW / 2, cardY + 70);
+            ctx.fillStyle = '#666'; ctx.font = '600 22px -apple-system, sans-serif';
+            ctx.fillText(s.label, x + cardW / 2, cardY + 110);
+        });
+    }
+
+    // Location text (only when no photo — with photo it's the polaroid caption)
+    if (!hasPhoto && locationText) {
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = '500 34px -apple-system, sans-serif';
+        ctx.fillText('📍 ' + locationText, w / 2, h - 220);
+    }
 
     // Watermark
     ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '600 36px -apple-system, sans-serif';
@@ -617,8 +718,8 @@ async function generateShareCard() {
     return canvas;
 }
 
-async function shareCard() {
-    const canvas = await generateShareCard();
+async function shareCard(locationText = '', photoImg = null) {
+    const canvas = await generateShareCard(locationText, photoImg);
     canvas.toBlob(async (blob) => {
         const file = new File([blob], 'vchame-stats.png', { type: 'image/png' });
         if (navigator.canShare?.({ files: [file] })) {
@@ -629,6 +730,72 @@ async function shareCard() {
         a.href = url; a.download = 'vchame-stats.png'; a.click();
         URL.revokeObjectURL(url);
     }, 'image/png');
+}
+
+// ── Stats panel ──
+function openStatsPanel() {
+    dom.statsPanel.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    renderStatsPanel();
+}
+
+function closeStatsPanel() {
+    dom.statsPanel.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function renderStatsPanel() {
+    // Personal stats from existing state
+    const hasSomething = Object.values(dishCounts).some(d => d.allTime > 0);
+    if (!hasSomething) {
+        dom.spPersonalCards.innerHTML = `<p class="sp-empty">${t('statsNone')}</p>`;
+    } else {
+        dom.spPersonalCards.innerHTML = dishes.map(d => {
+            const s = dishCounts[d.key];
+            if (s.allTime === 0) return '';
+            return `<div class="sp-dish-card">
+                <img src="/images/${d.key}.png" alt="">
+                <div class="sp-dish-body">
+                    <div class="sp-dish-name">${d[lang].name}</div>
+                    <div class="sp-dish-stats">
+                        <div class="sp-stat"><span class="sp-stat-num">${s.today}</span><span class="sp-stat-lbl">${t('today')}</span></div>
+                        <div class="sp-stat"><span class="sp-stat-num">${s.week}</span><span class="sp-stat-lbl">${t('thisWeek')}</span></div>
+                        <div class="sp-stat"><span class="sp-stat-num">${s.allTime}</span><span class="sp-stat-lbl">${t('allTime')}</span></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // Global totals (from cached state)
+    dom.spGlobalTotal.textContent = globalTotal.toLocaleString();
+    dom.spGlobalPeople.textContent = globalPeople.toLocaleString();
+
+    const byDishMap = {};
+    globalByDish.forEach(d => byDishMap[d.dish] = d.count);
+    const maxCount = Math.max(1, ...Object.values(byDishMap));
+
+    dom.spGlobalDishes.innerHTML = dishes.map(d => {
+        const count = byDishMap[d.key] || 0;
+        const pct = Math.round((count / maxCount) * 100);
+        return `<div class="sp-global-row">
+            <img src="/images/${d.key}.png" alt="">
+            <div class="sp-global-info">
+                <div class="sp-global-name">
+                    <span>${d[lang].name}</span>
+                    <span class="sp-global-count">${count.toLocaleString()}</span>
+                </div>
+                <div class="sp-bar-track"><div class="sp-bar-fill" style="width:${pct}%"></div></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ── Share modal ──
+let sharePhotoImg = null;
+
+function openShareModal() {
+    dom.shareModal.classList.add('open');
 }
 
 // ── PWA Install ──
@@ -659,9 +826,44 @@ function getInstallHint() {
 
 // ── Event listeners ──
 dom.dishZone.addEventListener('pointerdown', (e) => { e.preventDefault(); eat(e); });
-dom.shareBtn.addEventListener('click', shareCard);
+dom.shareBtn.addEventListener('click', openShareModal);
 dom.undoBtn.addEventListener('click', undoEat);
 dom.langBtn.addEventListener('click', () => { lang = lang === 'ka' ? 'en' : 'ka'; applyLang(); });
+
+// Stats panel
+dom.statsLink.addEventListener('click', (e) => { e.preventDefault(); openStatsPanel(); });
+dom.statsPanelClose.addEventListener('click', closeStatsPanel);
+dom.statsPanelLangBtn.addEventListener('click', () => { lang = lang === 'ka' ? 'en' : 'ka'; applyLang(); });
+
+// Share modal
+dom.shareModalClose.addEventListener('click', () => dom.shareModal.classList.remove('open'));
+dom.shareModal.addEventListener('click', (e) => { if (e.target === dom.shareModal) dom.shareModal.classList.remove('open'); });
+dom.sharePhotoPick.addEventListener('click', () => dom.sharePhotoInput.click());
+dom.sharePhotoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        dom.sharePhotoPreview.src = ev.target.result;
+        dom.sharePhotoPreview.style.display = 'block';
+        dom.sharePhotoRemove.style.display = 'inline-flex';
+        sharePhotoImg = dom.sharePhotoPreview;
+    };
+    reader.readAsDataURL(file);
+});
+dom.sharePhotoRemove.addEventListener('click', () => {
+    sharePhotoImg = null;
+    dom.sharePhotoPreview.style.display = 'none';
+    dom.sharePhotoPreview.src = '';
+    dom.sharePhotoRemove.style.display = 'none';
+    dom.sharePhotoInput.value = '';
+});
+dom.shareGenerate.addEventListener('click', async () => {
+    dom.shareModal.classList.remove('open');
+    const loc = dom.shareLocation.value.trim();
+    const photo = sharePhotoImg?.complete && sharePhotoImg.naturalWidth > 0 ? sharePhotoImg : null;
+    await shareCard(loc, photo);
+});
 
 // Tab switching
 document.querySelectorAll('.dish-tab').forEach(tab => {

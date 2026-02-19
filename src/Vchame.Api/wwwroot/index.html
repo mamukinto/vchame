@@ -21,7 +21,7 @@
     <div id="app">
         <div class="top-bar">
             <div class="global-banner" id="globalBanner"></div>
-            <a href="/stats" class="stats-btn" title="Stats">📊 Stats</a>
+            <a href="/stats" id="statsLink" class="stats-btn" title="Stats">📊 Stats</a>
             <button class="lang-btn" id="langBtn">EN</button>
         </div>
 
@@ -39,9 +39,9 @@
                         <div class="mouth" id="mouth"></div>
                     </div>
                 </div>
-                <div class="tap-hint" id="tapHint" data-i18n="tapHint">შემეხე!</div>
                 <div class="bite-particles" id="particles"></div>
             </div>
+            <div class="tap-hint" id="tapHint" data-i18n="tapHint">შემეხე!</div>
 
             <div class="counter">
                 <div class="count-display">
@@ -104,6 +104,59 @@
                     <span class="dish-tab-label" data-i18n="dish_lobiani">ლობიანი</span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Stats slide-up panel -->
+    <div id="statsPanel" class="stats-panel">
+        <div class="stats-panel-bar">
+            <button class="stats-back-btn" id="statsPanelClose">← <span id="statsPanelBackLabel">უკან</span></button>
+            <span class="stats-panel-title" id="statsPanelTitle">სტატისტიკა</span>
+            <button class="lang-btn" id="statsPanelLangBtn">EN</button>
+        </div>
+        <div class="stats-panel-body">
+            <div class="sp-section">
+                <div class="sp-section-title" id="spPersonalTitle">შენი სტატისტიკა</div>
+                <div id="spPersonalCards"></div>
+            </div>
+            <div class="sp-section">
+                <div class="sp-section-title" id="spGlobalTitle">გლობალური სტატისტიკა</div>
+                <div class="sp-global-summary">
+                    <div class="sp-summary-card">
+                        <div class="sp-summary-number" id="spGlobalTotal">—</div>
+                        <div class="sp-summary-label" id="spGlobalTotalLabel">სულ საჭმელი</div>
+                    </div>
+                    <div class="sp-summary-card">
+                        <div class="sp-summary-number" id="spGlobalPeople">—</div>
+                        <div class="sp-summary-label" id="spGlobalPeopleLabel">ადამიანი</div>
+                    </div>
+                </div>
+                <div id="spGlobalDishes"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share options modal -->
+    <div id="shareModal" class="share-modal">
+        <div class="share-modal-content">
+            <div class="share-modal-header">
+                <span class="share-modal-title" id="smTitle">📸 გაზიარება</span>
+                <button class="share-modal-close" id="shareModalClose">✕</button>
+            </div>
+            <div class="share-modal-field">
+                <label class="share-field-label" id="smLocationLabel">📍 მდებარეობა</label>
+                <input type="text" id="shareLocation" class="share-location-input" placeholder="რესტორანი, ქალაქი..." maxlength="60">
+            </div>
+            <div class="share-modal-field">
+                <label class="share-field-label" id="smPhotoLabel">🖼 ფოტო (სურვილისამებრ)</label>
+                <div class="share-photo-row">
+                    <button class="share-photo-pick" id="sharePhotoPick" data-i18n="shareAddPhoto">+ ფოტოს დამატება</button>
+                    <button class="share-photo-remove" id="sharePhotoRemove" style="display:none" data-i18n="sharePhotoRemove">✕ წაშლა</button>
+                </div>
+                <input type="file" id="sharePhotoInput" accept="image/*" style="display:none">
+                <img id="sharePhotoPreview" class="share-photo-preview" style="display:none" alt="">
+            </div>
+            <button class="share-generate-btn" id="shareGenerate" data-i18n="shareGenerate">📸 გენერირება</button>
         </div>
     </div>
 
