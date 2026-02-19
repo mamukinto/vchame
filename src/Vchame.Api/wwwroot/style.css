@@ -407,6 +407,13 @@ body {
     align-items: center;
 }
 
+/* Undo row */
+.undo-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 /* Undo button */
 .undo-btn {
     background: none;
@@ -425,6 +432,22 @@ body {
 .undo-btn:active {
     color: var(--accent);
 }
+
+/* Clear button */
+.clear-btn {
+    background: none;
+    color: var(--accent);
+    border: 1px solid #e9456030;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+.clear-btn:active { background: #e9456015; }
 
 /* Install button */
 .install-btn {
