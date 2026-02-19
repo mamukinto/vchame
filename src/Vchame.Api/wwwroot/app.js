@@ -118,6 +118,7 @@ const i18n = {
         shareWatermark: 'დათვალე შენი საჭმელი',
         undo: 'წაშალე ბოლო',
         shareTitle: 'დღევანდელი ზიანი',
+        statsBtn: 'სტატ.',
         // stats panel
         statsBack: 'უკან', statsTitle: 'სტატისტიკა',
         statsPersonal: 'შენი სტატისტიკა', statsGlobal: 'გლობალური სტატისტიკა',
@@ -140,6 +141,7 @@ const i18n = {
         shareWatermark: 'count your food',
         undo: 'undo last',
         shareTitle: 'TODAY\'S DAMAGE',
+        statsBtn: 'Stats',
         // stats panel
         statsBack: 'Back', statsTitle: 'Stats',
         statsPersonal: 'Your Stats', statsGlobal: 'Global Stats',
