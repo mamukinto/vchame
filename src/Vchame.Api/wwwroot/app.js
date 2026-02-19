@@ -728,12 +728,8 @@ async function shareCard(locationText = '', photoImg = null) {
     canvas.toBlob(async (blob) => {
         const file = new File([blob], 'vchame-stats.png', { type: 'image/png' });
         if (navigator.canShare?.({ files: [file] })) {
-            try { await navigator.share({ files: [file] }); return; } catch {}
+            try { await navigator.share({ files: [file] }); } catch {}
         }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'vchame-stats.png'; a.click();
-        URL.revokeObjectURL(url);
     }, 'image/png');
 }
 
