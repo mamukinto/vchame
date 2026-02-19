@@ -620,12 +620,13 @@ async function generateShareCard(locationText = '', photoImg = null) {
         const pw = 800, ph = 620;
         const px = (w - pw) / 2;
         drawPolaroid(ctx, photoImg, px, 60, pw, ph, locationText);
-        titleY = 60 + ph + 80;
-        dishStartY = titleY + 70;
+        titleY = 60 + ph + 56;
+        dishStartY = titleY + 52;
     }
 
     // Title
-    ctx.fillStyle = '#888'; ctx.font = '600 48px -apple-system, sans-serif';
+    const titleFont = hasPhoto ? 36 : 48;
+    ctx.fillStyle = '#888'; ctx.font = `600 ${titleFont}px -apple-system, sans-serif`;
     ctx.fillText(t('shareTitle').toUpperCase(), w / 2, titleY);
 
     // Active dishes
@@ -637,10 +638,13 @@ async function generateShareCard(locationText = '', photoImg = null) {
         return canvas;
     }
 
-    // Layout: 2-col grid, rowStep accounts for dish + name + count below
-    const dishSize = 200;
-    const dishGap = 70;
-    const rowStep = dishSize + 140 + dishGap; // 200 body + 140 text below + gap
+    // Layout: 2-col grid, scale down when photo present
+    const dishSize = hasPhoto ? 140 : 200;
+    const countFont = hasPhoto ? 60 : 80;
+    const nameFont = hasPhoto ? 24 : 28;
+    const countOffset = hasPhoto ? 90 : 122; // px below dish center for count text
+    const dishGap = hasPhoto ? 60 : 70;
+    const rowStep = dishSize + countOffset + (hasPhoto ? 30 : 40) + dishGap;
     const cols = activeDishes.length === 1 ? 1 : 2;
     const rows = Math.ceil(activeDishes.length / cols);
     const gridWidth = cols * dishSize + (cols - 1) * dishGap;
@@ -655,13 +659,14 @@ async function generateShareCard(locationText = '', photoImg = null) {
 
         await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, x, y, dishSize, dishSize);
 
-        ctx.fillStyle = '#eee'; ctx.font = '600 28px -apple-system, sans-serif';
-        ctx.fillText(dish[lang].name, x, y + dishSize / 2 + 42);
+        ctx.fillStyle = '#eee'; ctx.font = `600 ${nameFont}px -apple-system, sans-serif`;
+        ctx.fillText(dish[lang].name, x, y + dishSize / 2 + (hasPhoto ? 30 : 42));
 
-        const cg = ctx.createLinearGradient(x - 50, y + dishSize / 2 + 52, x + 50, y + dishSize / 2 + 122);
+        const nameOffset = hasPhoto ? 30 : 42;
+        const cg = ctx.createLinearGradient(x - 50, y + dishSize / 2 + nameOffset + 10, x + 50, y + dishSize / 2 + countOffset);
         cg.addColorStop(0, '#f5c518'); cg.addColorStop(1, '#e94560');
-        ctx.fillStyle = cg; ctx.font = '800 80px -apple-system, sans-serif';
-        ctx.fillText(dishCounts[dish.key].today.toString(), x, y + dishSize / 2 + 122);
+        ctx.fillStyle = cg; ctx.font = `800 ${countFont}px -apple-system, sans-serif`;
+        ctx.fillText(dishCounts[dish.key].today.toString(), x, y + dishSize / 2 + countOffset);
     }
 
     // Combined totals
@@ -671,8 +676,8 @@ async function generateShareCard(locationText = '', photoImg = null) {
     const totalAll = Object.values(dishCounts).reduce((sum, d) => sum + d.allTime, 0);
 
     // Bottom of dish grid
-    const dishesBottom = dishStartY + (rows - 1) * rowStep + dishSize / 2 + 122;
-    const statsY = dishesBottom + 100;
+    const dishesBottom = dishStartY + (rows - 1) * rowStep + dishSize / 2 + countOffset;
+    const statsY = dishesBottom + (hasPhoto ? 70 : 100);
 
     ctx.fillStyle = '#888'; ctx.font = '600 36px -apple-system, sans-serif';
     ctx.fillText(t('shareToday').toUpperCase(), w / 2, statsY);
