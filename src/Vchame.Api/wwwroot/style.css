@@ -407,6 +407,11 @@ body {
     align-items: center;
 }
 
+/* When install button is hidden, push dish tabs to bottom */
+.main:has(.install-btn[style*="display: none"]) {
+    justify-content: space-between;
+}
+
 /* Undo row */
 .undo-row {
     display: flex;
