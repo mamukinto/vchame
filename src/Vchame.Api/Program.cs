@@ -111,6 +111,20 @@ api.MapGet("/stats/{deviceId}", async (string deviceId, string? localDate, AppDb
         .Where(x => x.DeviceId == deviceId)
         .ToListAsync();
 
+    var activeDays = counts
+        .GroupBy(x => x.Date)
+        .Where(g => g.Sum(x => x.Count) > 0)
+        .Select(g => g.Key)
+        .OrderByDescending(d => d)
+        .ToList();
+    int streak = 0;
+    var check = today;
+    foreach (var day in activeDays)
+    {
+        if (day == check) { streak++; check = check.AddDays(-1); }
+        else if (day < check) break;
+    }
+
     var dishes = counts
         .GroupBy(x => x.DishType)
         .ToDictionary(
@@ -130,8 +144,34 @@ api.MapGet("/stats/{deviceId}", async (string deviceId, string? localDate, AppDb
         month = counts.Where(x => x.Date >= monthStart).Sum(x => x.Count),
         allTime = counts.Sum(x => x.Count),
         days = counts.Select(x => x.Date).Distinct().Count(),
+        streak,
         dishes
     });
+});
+
+api.MapGet("/leaderboard", async (string? deviceId, string? period, AppDb db) =>
+{
+    var query = db.DailyCounts.AsQueryable();
+    if (period == "week")
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var dow = today.DayOfWeek;
+        var weekStart = today.AddDays(-(int)dow + (int)DayOfWeek.Monday);
+        if (dow == DayOfWeek.Sunday) weekStart = weekStart.AddDays(-7);
+        query = query.Where(x => x.Date >= weekStart);
+    }
+    var top10 = await query
+        .GroupBy(x => x.DeviceId)
+        .Select(g => new { DeviceId = g.Key, Total = g.Sum(x => x.Count) })
+        .OrderByDescending(x => x.Total)
+        .Take(10)
+        .ToListAsync();
+    var result = top10.Select((x, i) => new {
+        rank = i + 1,
+        count = x.Total,
+        isMe = x.DeviceId == deviceId
+    });
+    return Results.Ok(result);
 });
 
 api.MapGet("/global", async (AppDb db) =>
