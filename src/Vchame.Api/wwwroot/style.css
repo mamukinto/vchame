@@ -95,8 +95,8 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 20px;
-    gap: 10px;
+    padding: 4px 20px;
+    gap: 5px;
 }
 
 /* Dish zone */
@@ -332,10 +332,9 @@ body {
     display: flex;
     gap: 8px;
     background: var(--surface);
-    padding: 12px;
+    padding: 10px;
     border-radius: 16px;
     border: 1px solid #ffffff10;
-    margin-top: auto;
     width: 100%;
     max-width: 320px;
 }
@@ -403,18 +402,8 @@ body {
 .actions {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
-}
-
-/* When install button is hidden, push dish tabs to bottom */
-.main:has(.install-btn[style*="display: none"]) {
-    justify-content: space-between;
-}
-
-/* When install button is hidden, remove gap so menu moves up */
-.actions:has(.install-btn[style*="display: none"]) {
-    gap: 0;
 }
 
 /* Undo row */
@@ -520,7 +509,7 @@ body {
 
 /* ── Compact layout for short screens ── */
 @media (max-height: 700px) {
-    .main { gap: 6px; padding: 4px 20px; }
+    .main { gap: 3px; padding: 2px 20px; }
     .dish-zone { width: 220px; height: 220px; }
     .dish-container { width: 200px; height: 200px; }
     .count-number { font-size: 46px; }
