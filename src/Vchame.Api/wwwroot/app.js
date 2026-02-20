@@ -527,14 +527,12 @@ async function syncToServer() {
 async function loadStats() {
     try {
         const data = await (await fetch(`/api/stats/${deviceId}?localDate=${localDate()}`)).json();
-        // Populate all dish counts from data.dishes
         if (data.dishes) {
             Object.keys(dishCounts).forEach(dish => {
-                if (data.dishes[dish]) {
-                    dishCounts[dish] = data.dishes[dish];
-                }
+                if (data.dishes[dish]) dishCounts[dish] = data.dishes[dish];
             });
         }
+        localStorage.setItem('vchame_counts_cache', JSON.stringify(dishCounts));
         updateAllCounters();
         updateMood();
         currentStreak = data.streak || 0;
@@ -1071,7 +1069,41 @@ document.querySelectorAll('.sp-lb-period').forEach(btn => {
     });
 });
 
+// ── Offline ──
+function showOfflineBanner() {
+    dom.offlineBanner.style.display = '';
+    dom.offlineBannerText.textContent = lang === 'ka'
+        ? 'ოფლაინ — ცვლილებები ვერ შეინახება'
+        : 'offline — counts won\'t sync';
+}
+function hideOfflineBanner() {
+    dom.offlineBanner.style.display = 'none';
+}
+
+window.addEventListener('offline', showOfflineBanner);
+window.addEventListener('online', () => {
+    hideOfflineBanner();
+    if (pendingCount !== 0) syncToServer();
+    loadStats();
+    loadGlobal();
+});
+
 // ── Init ──
+// Restore cached counts instantly (no zero-flash for returning users)
+try {
+    const cached = localStorage.getItem('vchame_counts_cache');
+    if (cached) {
+        const parsed = JSON.parse(cached);
+        Object.keys(dishCounts).forEach(dish => {
+            if (parsed[dish]) dishCounts[dish] = parsed[dish];
+        });
+        updateAllCounters();
+        updateMood();
+    }
+} catch {}
+
+if (!navigator.onLine) showOfflineBanner();
+
 applyLang();
 loadStats();
 loadGlobal();
