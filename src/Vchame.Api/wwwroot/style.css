@@ -412,6 +412,11 @@ body {
     justify-content: space-between;
 }
 
+/* When install button is hidden, remove gap so menu moves up */
+.actions:has(.install-btn[style*="display: none"]) {
+    gap: 0;
+}
+
 /* Undo row */
 .undo-row {
     display: flex;
