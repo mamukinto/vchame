@@ -202,6 +202,10 @@ let globalTotal = 0;
 let globalPeople = 0;
 let globalByDish = [];
 let currentMoodCls = '';
+let currentStreak = 0;
+let leaderboardData = [];
+let activeStatsTab = 'personal';
+let currentLbPeriod = 'alltime';
 
 // ── Animations via Web Animations API (zero reflow) ──
 const wobbleKeyframes = [
@@ -262,6 +266,58 @@ function firePlusOne(x, y) {
     el.animate(floatKeyframes, floatOpts);
 }
 
+// ── Roast Toasts ──
+const ROAST_THRESHOLDS = [5, 10, 15, 20, 30];
+const ROASTS = {
+    khinkali: {
+        5:  { ka: 'ჯერ კარგად ხარ... 😅', en: 'still doing fine... 😅' },
+        10: { ka: 'კუჭი გაფრთხილება გამოაგზავნა 📨', en: 'your stomach filed for divorce 📨' },
+        15: { ka: 'ხინკლის ლეგენდა 👑', en: 'khinkali legend unlocked 👑' },
+        20: { ka: 'ეს კვება კი არა, ცხოვრების სტილია 💀', en: 'this is a lifestyle not a meal 💀' },
+        30: { ka: 'ძმაო... 🫡', en: 'bro... 🫡' },
+    },
+    khachapuri: {
+        5:  { ka: 'ყველი დასახლდა 🧀', en: 'cheese has entered the chat 🧀' },
+        10: { ka: 'ყველი კოლეგა გახდი 🫡', en: 'you and cheese are besties now 🫡' },
+        15: { ka: 'სისხლი ყველია 🩸', en: 'your blood type is now cheese 🩸' },
+        20: { ka: 'კარდიოლოგი ტირის 😭', en: 'your cardiologist is crying 😭' },
+        30: { ka: 'ხაჭაპური = შენ 🧬', en: 'khachapuri = you at this point 🧬' },
+    },
+    qababi: {
+        5:  { ka: 'კარგი გახურება 🔥', en: 'nice warmup 🔥' },
+        10: { ka: 'კაბაბის ოსტატი ხარ 🥩', en: 'grill master activated 🥩' },
+        15: { ka: 'ბუხარი გახდი 🔥', en: 'you ARE the grill now 🔥' },
+        20: { ka: 'ქაბაბი ყოველდღიური ვიტამინია? 💊', en: 'is qababi your daily vitamin? 💊' },
+        30: { ka: 'ვინ ხარ?! 😶', en: 'who ARE you?! 😶' },
+    },
+    lobiani: {
+        5:  { ka: 'ლობიო ბედნიერია 🫘', en: 'the beans are pleased 🫘' },
+        10: { ka: 'ლობიანის სახელი ხარ 🏷', en: 'the bean chose you 🏷' },
+        15: { ka: 'ლობიო სიცოცხლეა 🌿', en: 'beans are your religion now 🌿' },
+        20: { ka: 'ლობიოს ნაციონალური გმირი 🎖', en: 'national bean hero 🎖' },
+        30: { ka: 'ლობიო = ლობიანი = შენ 🌀', en: 'bean = lobiani = you 🌀' },
+    },
+};
+
+function showRoast(dish, count) {
+    const threshold = ROAST_THRESHOLDS.find(t => count === t);
+    if (!threshold) return;
+    const roast = ROASTS[dish]?.[threshold];
+    if (!roast) return;
+    let toast = dom.roastToast;
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'roastToast';
+        toast.className = 'roast-toast';
+        document.body.appendChild(toast);
+        dom.roastToast = toast;
+    }
+    toast.textContent = roast[lang];
+    toast.classList.add('roast-toast-show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('roast-toast-show'), 4000);
+}
+
 // ── Mood ──
 const MOOD_THRESHOLDS = [3, 8, 15, 25, 40, Infinity];
 const MOOD_CLASSES = ['mood-happy', 'mood-happy', 'mood-neutral', 'mood-worried', 'mood-sad', 'mood-crying', 'mood-dead'];
@@ -313,6 +369,35 @@ function updateDishHint() {
     dom.dishHint.textContent = `${dish[lang].name} · ${dish[lang].unit}`;
 }
 
+// ── Streak display ──
+function updateStreakDisplay() {
+    if (currentStreak >= 2) {
+        dom.streakBadge.textContent = `🔥 ${currentStreak}`;
+        dom.streakBadge.style.display = '';
+    } else {
+        dom.streakBadge.style.display = 'none';
+    }
+}
+
+// ── Food personality badge ──
+function getPersonalityBadge() {
+    const totalAllTime = Object.values(dishCounts).reduce((s, d) => s + d.allTime, 0);
+    if (totalAllTime === 0) return { ka: '🍽 დამწყები', en: '🍽 Rookie' };
+    const max = Math.max(...Object.values(dishCounts).map(d => d.allTime));
+    const dominant = dishes.find(d => dishCounts[d.key].allTime === max);
+    const pct = max / totalAllTime;
+    if (pct <= 0.4 && Object.values(dishCounts).filter(d => d.allTime > 0).length >= 3) {
+        return { ka: '🇬🇪 ნამდვილი ქართველი', en: '🇬🇪 True Georgian' };
+    }
+    const badges = {
+        khinkali:  { ka: '🥟 ხინკლის მამა', en: '🥟 Khinkali Lord' },
+        khachapuri: { ka: '🧀 ყველის ბოსი', en: '🧀 Cheese Brain' },
+        qababi:    { ka: '🔥 კაბაბის ოსტატი', en: '🔥 Grill Master' },
+        lobiani:   { ka: '🫘 ლობიანის მოყვარული', en: '🫘 Bean Lover' },
+    };
+    return badges[dominant?.key] || { ka: '🍽 დამწყები', en: '🍽 Rookie' };
+}
+
 // ── Dish switching ──
 function switchDish(dishKey) {
     if (dishKey === currentDish) return;
@@ -344,6 +429,7 @@ function eat(e) {
 
     updateAllCounters();
     updateMood();
+    showRoast(currentDish, dishCounts[currentDish].today);
 
     // Wobble — Web Animations API, no reflow
     dom.dishImage.animate(wobbleKeyframes, wobbleOpts);
@@ -451,6 +537,8 @@ async function loadStats() {
         }
         updateAllCounters();
         updateMood();
+        currentStreak = data.streak || 0;
+        updateStreakDisplay();
     } catch {}
 }
 
@@ -462,6 +550,31 @@ async function loadGlobal() {
         globalByDish = data.byDish || [];
         updateBanner();
     } catch {}
+}
+
+async function loadLeaderboard(period) {
+    try {
+        const data = await (await fetch(`/api/leaderboard?deviceId=${encodeURIComponent(deviceId)}&period=${period}`)).json();
+        leaderboardData = data;
+        renderLeaderboard();
+    } catch {}
+}
+
+function renderLeaderboard() {
+    if (!leaderboardData.length) {
+        dom.spLeaderboardList.innerHTML = `<p class="sp-empty">${t('statsNone')}</p>`;
+        return;
+    }
+    const medals = ['🥇', '🥈', '🥉'];
+    dom.spLeaderboardList.innerHTML = leaderboardData.map(row => {
+        const rankEl = medals[row.rank - 1] ?? `<span style="font-size:13px;color:var(--text-dim)">${row.rank}</span>`;
+        const youTag = row.isMe ? `<span class="sp-you-tag">YOU</span>` : '';
+        return `<div class="sp-lb-row ${row.isMe ? 'sp-lb-me' : ''}">
+            <div class="sp-lb-rank">${rankEl}</div>
+            <div class="sp-lb-count">${row.count.toLocaleString()}</div>
+            ${youTag}
+        </div>`;
+    }).join('');
 }
 
 // ── Draw dish with mood face on canvas ──
@@ -740,6 +853,21 @@ async function generateShareCard(locationText = '', photoImg = null) {
     ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.font = '28px -apple-system, sans-serif';
     ctx.fillText(t('shareWatermark'), w / 2, h - 110);
 
+    // Streak on share card
+    if (currentStreak >= 2) {
+        ctx.fillStyle = '#f5c518';
+        ctx.font = '800 30px -apple-system, sans-serif';
+        ctx.fillText(`🔥 Day ${currentStreak}`, w / 2, h - 60);
+    }
+
+    // Personality badge on share card
+    const shareBadge = getPersonalityBadge();
+    if (totalAll > 0) {
+        ctx.fillStyle = '#f5c518';
+        ctx.font = '800 26px -apple-system, sans-serif';
+        ctx.fillText(shareBadge[lang], w / 2, h - 30);
+    }
+
     return canvas;
 }
 
@@ -758,6 +886,7 @@ function openStatsPanel() {
     dom.statsPanel.classList.add('open');
     document.body.style.overflow = 'hidden';
     renderStatsPanel();
+    loadLeaderboard(currentLbPeriod);
 }
 
 function closeStatsPanel() {
@@ -766,12 +895,23 @@ function closeStatsPanel() {
 }
 
 function renderStatsPanel() {
+    // Badge
+    const badge = getPersonalityBadge();
+    dom.spBadge.textContent = badge[lang];
+    const totalAllTime = Object.values(dishCounts).reduce((s, d) => s + d.allTime, 0);
+    dom.spBadge.style.display = totalAllTime > 0 ? '' : 'none';
+
+    // Streak row
+    const streakHtml = currentStreak >= 2
+        ? `<div class="sp-streak-row">🔥 ${currentStreak}-day streak</div>`
+        : '';
+
     // Personal stats from existing state
     const hasSomething = Object.values(dishCounts).some(d => d.allTime > 0);
     if (!hasSomething) {
-        dom.spPersonalCards.innerHTML = `<p class="sp-empty">${t('statsNone')}</p>`;
+        dom.spPersonalCards.innerHTML = `${streakHtml}<p class="sp-empty">${t('statsNone')}</p>`;
     } else {
-        dom.spPersonalCards.innerHTML = dishes.map(d => {
+        dom.spPersonalCards.innerHTML = streakHtml + dishes.map(d => {
             const s = dishCounts[d.key];
             if (s.allTime === 0) return '';
             return `<div class="sp-dish-card">
@@ -906,6 +1046,29 @@ dom.installHintClose.addEventListener('click', () => { dom.installHint.style.dis
 // Reconcile with server when user returns to the app
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && pendingCount === 0) loadStats();
+});
+
+// Stats panel tab switching
+document.querySelectorAll('.sp-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        activeStatsTab = tab.dataset.tab;
+        document.querySelectorAll('.sp-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        dom.spPersonalSection.style.display = activeStatsTab === 'personal' ? '' : 'none';
+        dom.spGlobalSection.style.display = activeStatsTab === 'global' ? '' : 'none';
+        dom.spLeaderboardSection.style.display = activeStatsTab === 'leaderboard' ? '' : 'none';
+        if (activeStatsTab === 'leaderboard') loadLeaderboard(currentLbPeriod);
+    });
+});
+
+// Leaderboard period toggle
+document.querySelectorAll('.sp-lb-period').forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentLbPeriod = btn.dataset.period;
+        document.querySelectorAll('.sp-lb-period').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadLeaderboard(currentLbPeriod);
+    });
 });
 
 // ── Init ──

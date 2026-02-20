@@ -731,3 +731,149 @@ body {
     cursor: pointer;
     margin-top: 4px;
 }
+
+/* ── Roast Toast ── */
+.roast-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a2e;
+    border: 1px solid var(--gold);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    max-width: calc(100vw - 40px);
+    text-align: center;
+}
+.roast-toast-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ── Personality Badge ── */
+.sp-badge {
+    background: linear-gradient(135deg, var(--gold), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    font-size: 18px;
+    text-align: center;
+    padding-bottom: 14px;
+}
+
+/* ── Streak Badge (main screen) ── */
+.streak-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--gold);
+    background: rgba(245, 197, 24, 0.1);
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 50px;
+    margin-top: 4px;
+}
+
+/* ── Stats Panel Tabs ── */
+.sp-tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid #ffffff10;
+}
+.sp-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.sp-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+}
+
+/* ── Streak row in personal stats ── */
+.sp-streak-row {
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 4px 0 12px;
+    text-align: center;
+}
+
+/* ── Leaderboard ── */
+#spLeaderboardSection {
+    padding: 16px 16px 8px;
+}
+.sp-lb-period-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.sp-lb-period {
+    background: none;
+    border: 1px solid #ffffff20;
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.sp-lb-period.active {
+    background: rgba(245, 197, 24, 0.1);
+    border-color: var(--gold);
+    color: var(--gold);
+}
+.sp-lb-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #ffffff08;
+    font-size: 15px;
+}
+.sp-lb-me {
+    background: rgba(245, 197, 24, 0.08);
+    border-radius: 10px;
+    padding: 10px 10px;
+    margin: 0 -10px;
+}
+.sp-lb-rank {
+    font-size: 20px;
+    min-width: 36px;
+    text-align: center;
+}
+.sp-lb-count {
+    font-weight: 700;
+    font-size: 17px;
+    flex: 1;
+}
+.sp-you-tag {
+    background: var(--gold);
+    color: #000;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 50px;
+    text-transform: uppercase;
+}

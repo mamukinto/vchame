@@ -50,6 +50,7 @@
                     <span class="count-label" id="countLabel" data-i18n="today">დღეს</span>
                 </div>
                 <div class="mood-text" id="moodText"></div>
+                <div id="streakBadge" class="streak-badge" style="display:none"></div>
             </div>
 
             <div class="stats">
@@ -119,12 +120,18 @@
             <span class="stats-panel-title" id="statsPanelTitle">სტატისტიკა</span>
             <button class="lang-btn" id="statsPanelLangBtn">EN</button>
         </div>
+        <div class="sp-tabs">
+            <button class="sp-tab active" data-tab="personal">შენი / Personal</button>
+            <button class="sp-tab" data-tab="global">გლობ. / Global</button>
+            <button class="sp-tab" data-tab="leaderboard">ლიდერბორდი</button>
+        </div>
         <div class="stats-panel-body">
-            <div class="sp-section">
+            <div id="spPersonalSection" class="sp-section">
                 <div class="sp-section-title" id="spPersonalTitle">შენი სტატისტიკა</div>
+                <div id="spBadge" class="sp-badge" style="display:none"></div>
                 <div id="spPersonalCards"></div>
             </div>
-            <div class="sp-section">
+            <div id="spGlobalSection" class="sp-section" style="display:none">
                 <div class="sp-section-title" id="spGlobalTitle">გლობალური სტატისტიკა</div>
                 <div class="sp-global-summary">
                     <div class="sp-summary-card">
@@ -137,6 +144,13 @@
                     </div>
                 </div>
                 <div id="spGlobalDishes"></div>
+            </div>
+            <div id="spLeaderboardSection" style="display:none">
+                <div class="sp-lb-period-toggle">
+                    <button class="sp-lb-period active" data-period="alltime">All time</button>
+                    <button class="sp-lb-period" data-period="week">This week</button>
+                </div>
+                <div id="spLeaderboardList"></div>
             </div>
         </div>
     </div>
