@@ -164,7 +164,7 @@ api.MapGet("/leaderboard", async (string? deviceId, string? period, AppDb db) =>
         .GroupBy(x => x.DeviceId)
         .Select(g => new { DeviceId = g.Key, Total = g.Sum(x => x.Count) })
         .OrderByDescending(x => x.Total)
-        .Take(10)
+        .Take(100)
         .ToListAsync();
     var result = top10.Select((x, i) => new {
         rank = i + 1,
