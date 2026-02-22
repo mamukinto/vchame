@@ -1,13 +1,13 @@
 # vchame.ge
 
-Georgian food counter PWA. Tap to count, share your shame on Instagram stories.
+Georgian food counter PWA. Track your feast, show your power.
 
 ## What it does
 
 Track how much you eat (khinkali, khachapuri, qababi, lobiani) with:
-- Per-dish counters with mood faces (happy → dead)
-- Roast toasts at milestones (5, 10, 15, 20, 30)
-- Food personality badges (Khinkali Lord, Cheese Brain, etc.)
+- Per-dish counters with mood faces (happy → legendary)
+- Hype toasts at milestones (5, 10, 15, 20, 30) — celebrating your power
+- Food personality badges (Khinkali King, Cheese Boss, Grill Master, Bean God)
 - Streak tracking (consecutive days)
 - Global leaderboard (top 100)
 - Instagram story share cards (with optional photo & location)
