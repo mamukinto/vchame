@@ -147,7 +147,7 @@ const i18n = {
         shareWeek: 'THIS WEEK', shareMonth: 'THIS MONTH', shareAll: 'ALL TIME',
         shareWatermark: 'show your power',
         undo: 'undo last', clear: 'clear all',
-        shareTitle: 'TODAY'S VICTORY',
+        shareTitle: 'TODAY\'S VICTORY',
         statsBtn: 'Stats',
         // stats panel
         statsBack: 'Back', statsTitle: 'Stats',
@@ -277,23 +277,23 @@ function firePlusOne(x, y) {
 const ROAST_THRESHOLDS = [5, 10, 15, 20, 30];
 const ROASTS = {
     khinkali: {
-        5:  { ka: 'შენ ხარ გმირი! 💪', en: 'you'''re a hero! 💪' },
+        5:  { ka: 'შენ ხარ გმირი! 💪', en: 'you\'re a hero! 💪' },
         10: { ka: 'ლეგენდარული! 👑', en: 'legendary! 👑' },
-        15: { ka: 'შენ ხარ ხინკლის მეფე! 🥟', en: 'you'''re the khinkali king! 🥟' },
+        15: { ka: 'შენ ხარ ხინკლის მეფე! 🥟', en: 'you\'re the khinkali king! 🥟' },
         20: { ka: 'საქართველოს სიამაყე! 🇬🇪', en: 'pride of Georgia! 🇬🇪' },
         30: { ka: 'შენ ღმერთი ხარ! 🔱', en: 'you are a GOD! 🔱' },
     },
     khachapuri: {
         5:  { ka: 'ძლიერი დასაწყისი! 🧀', en: 'strong start! 🧀' },
         10: { ka: 'ყველის ლეგენდა! 👑', en: 'cheese legend! 👑' },
-        15: { ka: 'შენ ხარ ბოსი! 💪', en: 'you'''re the boss! 💪' },
+        15: { ka: 'შენ ხარ ბოსი! 💪', en: 'you\'re the boss! 💪' },
         20: { ka: 'კარდიოლოგი შენით ამაყობს! 😎', en: 'your cardiologist is proud! 😎' },
         30: { ka: 'ხაჭაპურის ღმერთი! 🔱', en: 'khachapuri god! 🔱' },
     },
     qababi: {
         5:  { ka: 'კარგი გახურება! 🔥', en: 'nice warmup! 🔥' },
         10: { ka: 'მაყლის ოსტატი! 🥩', en: 'grill master! 🥩' },
-        15: { ka: 'შენ ხარ ჩემპიონი! 🏆', en: 'you'''re a champion! 🏆' },
+        15: { ka: 'შენ ხარ ჩემპიონი! 🏆', en: 'you\'re a champion! 🏆' },
         20: { ka: 'ქაბაბის მეფე! 👑', en: 'qababi king! 👑' },
         30: { ka: 'შენ ღმერთი ხარ! 🔱', en: 'you are a GOD! 🔱' },
     },
