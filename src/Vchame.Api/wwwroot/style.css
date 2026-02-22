@@ -880,3 +880,415 @@ body {
     border-radius: 50px;
     text-transform: uppercase;
 }
+
+
+/* ── Friends UI ── */
+.sp-friends-your-code {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.sp-code-label {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+}
+
+.sp-code-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sp-code {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: 4px;
+    font-family: monospace;
+}
+
+.sp-copy-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--gold);
+    color: var(--bg);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.sp-friends-nickname, .sp-friends-add {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.sp-nickname-input, .sp-add-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+}
+
+.sp-nickname-input::placeholder, .sp-add-input::placeholder {
+    color: var(--text-dim);
+}
+
+.sp-save-btn, .sp-add-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gold);
+    color: var(--bg);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.sp-friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sp-friend-card {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.sp-friend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.sp-friend-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.sp-friend-badge {
+    font-size: 14px;
+    color: var(--gold);
+}
+
+.sp-friend-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 8px;
+}
+
+.sp-comparison {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.sp-friends-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+}
+
+.sp-friends-empty p {
+    margin: 8px 0;
+}
+
+.sp-hint {
+    font-size: 14px;
+    color: var(--text-dim);
+    opacity: 0.7;
+}
+
+/* ── Friends UI ── */
+.sp-friends-your-code {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.sp-code-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+}
+
+.sp-code {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: 4px;
+    font-family: monospace;
+}
+
+.sp-copy-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--gold);
+    color: var(--bg);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.sp-friends-nickname, .sp-friends-add {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.sp-nickname-input, .sp-add-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+}
+
+.sp-nickname-input::placeholder, .sp-add-input::placeholder {
+    color: var(--text-dim);
+}
+
+.sp-save-btn, .sp-add-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gold);
+    color: var(--bg);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.sp-friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sp-friend-card {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.sp-friend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.sp-friend-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.sp-friend-badge {
+    font-size: 14px;
+    color: var(--gold);
+}
+
+.sp-friend-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 8px;
+}
+
+.sp-comparison {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.sp-friends-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+}
+
+.sp-friends-empty p {
+    margin: 8px 0;
+}
+
+.sp-hint {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Friends Section */
+.sp-friends-your-code {
+  margin-bottom: 20px;
+}
+
+.sp-code-label {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.sp-code-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sp-code {
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #ffd700;
+  flex: 1;
+}
+
+.sp-copy-btn {
+  padding: 8px 16px;
+  background: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sp-copy-btn:active {
+  background: #3a3a4e;
+}
+
+.sp-friends-nickname, .sp-friends-add {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.sp-nickname-input, .sp-add-input {
+  flex: 1;
+  padding: 12px;
+  background: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+}
+
+.sp-nickname-input::placeholder, .sp-add-input::placeholder {
+  color: #666;
+}
+
+.sp-save-btn, .sp-add-btn {
+  padding: 12px 20px;
+  background: #ffd700;
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.sp-save-btn:active, .sp-add-btn:active {
+  background: #ffed4e;
+}
+
+.sp-friends-list {
+  margin-top: 20px;
+}
+
+.sp-friend-card {
+  background: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.sp-friend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.sp-friend-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.sp-friend-badge {
+  font-size: 20px;
+}
+
+.sp-friend-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.sp-friend-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sp-friend-stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.sp-friend-stat-value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.sp-friend-comparison {
+  font-size: 14px;
+  color: #ffd700;
+  font-style: italic;
+}
+
+.sp-friends-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.sp-friends-empty-title {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.sp-friends-empty-hint {
+  font-size: 14px;
+}

@@ -1,4 +1,28 @@
-<!DOCTYPE html>
+<!DOCTYPE htm
+
+        <!-- Friends Section -->
+        <div id="spFriendsSection" class="sp-section" style="display:none">
+            <div class="sp-friends-your-code">
+                <div class="sp-code-label">Your code</div>
+                <div class="sp-code-row">
+                    <span id="spFriendsCode" class="sp-code">------</span>
+                    <button id="spFriendsCopyCode" class="sp-copy-btn">📋 Copy</button>
+                </div>
+            </div>
+            
+            <div class="sp-friends-nickname">
+                <input id="spFriendsNickname" type="text" placeholder="Your name..." maxlength="50" class="sp-nickname-input">
+                <button id="spFriendsSaveNickname" class="sp-save-btn">Save</button>
+            </div>
+            
+            <div class="sp-friends-add">
+                <input id="spFriendsAddInput" type="text" placeholder="Enter friend code..." maxlength="6" class="sp-add-input">
+                <button id="spFriendsAddBtn" class="sp-add-btn">+ Add</button>
+            </div>
+            
+            <div id="spFriendsList" class="sp-friends-list"></div>
+        </div>
+l>
 <html lang="ka">
 <head>
     <meta charset="UTF-8">
@@ -127,6 +151,7 @@
             <button class="sp-tab active" data-tab="personal">შენი / Personal</button>
             <button class="sp-tab" data-tab="global">გლობ. / Global</button>
             <button class="sp-tab" data-tab="leaderboard">TOP 100</button>
+            <button class="sp-tab" data-tab="friends">მეგობრები / Friends</button>
         </div>
         <div class="stats-panel-body">
             <div id="spPersonalSection" class="sp-section">
@@ -191,3 +216,27 @@
     </script>
 </body>
 </html>
+
+        <!-- Friends Section -->
+        <div id="spFriendsSection" class="sp-section" style="display:none">
+            <div class="sp-friends-your-code">
+                <div class="sp-code-row">
+                    <span id="spFriendsCode" class="sp-code">------</span>
+                    <button id="spFriendsCopyCode" class="sp-copy-btn">📋</button>
+                </div>
+            </div>
+            
+            <div class="sp-friends-nickname">
+                <input id="spFriendsNickname" type="text" maxlength="50" class="sp-nickname-input">
+                <button id="spFriendsSaveNickname" class="sp-save-btn">Save</button>
+            </div>
+            
+            <div class="sp-friends-add">
+                <input id="spFriendsAddInput" type="text" maxlength="6" class="sp-add-input">
+                <button id="spFriendsAddBtn" class="sp-add-btn">+ Add</button>
+            </div>
+            
+            <div id="spFriendsList" class="sp-friends-list"></div>
+        </div>
+
+

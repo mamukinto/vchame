@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +44,16 @@ DateOnly GetToday(string? localDate)
     if (localDate is not null && DateOnly.TryParse(localDate, out var parsed))
         return parsed;
     return DateOnly.FromDateTime(DateTime.UtcNow);
+}
+
+
+string GenerateFriendCode(string deviceId)
+{
+    using var sha = SHA256.Create();
+    var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(deviceId));
+    var num = BitConverter.ToUInt32(hash, 0);
+    var code = Convert.ToString(num % 2176782336, 36).ToUpper().PadLeft(6, '0');
+    return code[^6..];
 }
 
 var api = app.MapGroup("/api");
@@ -185,6 +197,83 @@ api.MapGet("/global", async (AppDb db) =>
     return Results.Ok(new { total, people = devices, byDish });
 });
 
+
+// ── Friends endpoints ──
+
+api.MapPost("/set-nickname", async (SetNicknameRequest req, AppDb db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.DeviceId)) return Results.BadRequest();
+    var nickname = req.Nickname?.Trim();
+    if (nickname != null && nickname.Length > 50) nickname = nickname.Substring(0, 50);
+    var device = await db.Devices.FindAsync(req.DeviceId);
+    if (device is null)
+    {
+        device = new Device { DeviceId = req.DeviceId, FriendCode = GenerateFriendCode(req.DeviceId), Nickname = nickname, CreatedAt = DateTime.UtcNow };
+        db.Devices.Add(device);
+    }
+    else { device.Nickname = nickname; }
+    await db.SaveChangesAsync();
+    return Results.Ok(new { nickname = device.Nickname, friendCode = device.FriendCode });
+});
+
+api.MapGet("/friend-code/{deviceId}", async (string deviceId, AppDb db) =>
+{
+    var device = await db.Devices.FindAsync(deviceId);
+    if (device is null)
+    {
+        device = new Device { DeviceId = deviceId, FriendCode = GenerateFriendCode(deviceId), Nickname = null, CreatedAt = DateTime.UtcNow };
+        db.Devices.Add(device);
+        await db.SaveChangesAsync();
+    }
+    return Results.Ok(new { code = device.FriendCode, nickname = device.Nickname });
+});
+
+api.MapPost("/add-friend", async (AddFriendRequest req, AppDb db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.DeviceId) || string.IsNullOrWhiteSpace(req.FriendCode)) return Results.BadRequest();
+    var friendCode = req.FriendCode.Trim().ToUpper();
+    var friendDevice = await db.Devices.FirstOrDefaultAsync(d => d.FriendCode == friendCode);
+    if (friendDevice is null) return Results.NotFound(new { error = "Friend code not found" });
+    if (friendDevice.DeviceId == req.DeviceId) return Results.BadRequest(new { error = "Cannot add yourself" });
+    var existing = await db.Friends.FirstOrDefaultAsync(f => f.DeviceId == req.DeviceId && f.FriendDeviceId == friendDevice.DeviceId);
+    if (existing is not null) return Results.Ok(new { success = true, alreadyAdded = true });
+    db.Friends.Add(new Friend { DeviceId = req.DeviceId, FriendDeviceId = friendDevice.DeviceId, AddedAt = DateTime.UtcNow });
+    await db.SaveChangesAsync();
+    return Results.Ok(new { success = true });
+});
+
+api.MapGet("/friends/{deviceId}", async (string deviceId, string? localDate, AppDb db) =>
+{
+    var today = GetToday(localDate);
+    var dow = today.DayOfWeek;
+    var weekStart = today.AddDays(-(int)dow + (int)DayOfWeek.Monday);
+    if (dow == DayOfWeek.Sunday) weekStart = weekStart.AddDays(-7);
+    var friendships = await db.Friends.Where(f => f.DeviceId == deviceId).ToListAsync();
+    var friendDeviceIds = friendships.Select(f => f.FriendDeviceId).ToList();
+    var friendDevices = await db.Devices.Where(d => friendDeviceIds.Contains(d.DeviceId)).ToListAsync();
+    var friendCounts = await db.DailyCounts.Where(c => friendDeviceIds.Contains(c.DeviceId)).ToListAsync();
+    var badges = new Dictionary<string, object>
+    {
+        ["khinkali"] = new { ka = "🥟 ხინკლის მამა", en = "🥟 Khinkali Lord" },
+        ["khachapuri"] = new { ka = "🧀 ყველის ბოსი", en = "🧀 Cheese Brain" },
+        ["qababi"] = new { ka = "🔥 მაყლის ოსტატი", en = "🔥 Grill Master" },
+        ["lobiani"] = new { ka = "🫘 ლობიანის ფანატიკოსი", en = "🫘 Bean Lover" }
+    };
+    var result = friendDevices.Select(fd =>
+    {
+        var counts = friendCounts.Where(c => c.DeviceId == fd.DeviceId).ToList();
+        var totalToday = counts.Where(c => c.Date == today).Sum(c => c.Count);
+        var totalWeek = counts.Where(c => c.Date >= weekStart).Sum(c => c.Count);
+        var totalAllTime = counts.Sum(c => c.Count);
+        var byDish = counts.GroupBy(c => c.DishType).Select(g => new { dish = g.Key, count = g.Sum(x => x.Count) }).OrderByDescending(g => g.count).ToList();
+        var topDish = byDish.FirstOrDefault()?.dish ?? "khinkali";
+        var badge = badges.ContainsKey(topDish) ? badges[topDish] : new { ka = "🍽 დამწყები", en = "🍽 Rookie" };
+        return new { friendCode = fd.FriendCode, nickname = fd.Nickname, totalToday, totalWeek, totalAllTime, badge, topDish };
+    }).ToList();
+    return Results.Ok(result);
+});
+
+
 app.MapGet("/stats", context =>
 {
     context.Response.ContentType = "text/html";
@@ -205,6 +294,8 @@ public class AppDb : DbContext
 {
     public AppDb(DbContextOptions<AppDb> options) : base(options) { }
     public DbSet<DailyCount> DailyCounts => Set<DailyCount>();
+    public DbSet<Device> Devices => Set<Device>();
+    public DbSet<Friend> Friends => Set<Friend>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -224,4 +315,23 @@ public class DailyCount
     public int Count { get; set; }
 }
 
+
+public class Device
+{
+    public required string DeviceId { get; set; }
+    public string? Nickname { get; set; }
+    public required string FriendCode { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class Friend
+{
+    public int Id { get; set; }
+    public required string DeviceId { get; set; }
+    public required string FriendDeviceId { get; set; }
+    public DateTime AddedAt { get; set; }
+}
+
 public record EatRequest(string DeviceId, int Count, string DishType = "khinkali", string? LocalDate = null);
+public record SetNicknameRequest(string DeviceId, string? Nickname);
+public record AddFriendRequest(string DeviceId, string FriendCode);
