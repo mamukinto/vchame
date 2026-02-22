@@ -294,16 +294,51 @@ api.MapGet("/friends/{deviceId}", async (string deviceId, string? localDate, App
         ["qababi"] = new { ka = "🔥 მაყლის ოსტატი", en = "🔥 Grill Master" },
         ["lobiani"] = new { ka = "🫘 ლობიანის ფანატიკოსი", en = "🫘 Bean Lover" }
     };
+    var allDishKeys = new[] { "khinkali", "khachapuri", "qababi", "lobiani" };
+
     var result = friendDevices.Select(fd =>
     {
         var counts = friendCounts.Where(c => c.DeviceId == fd.DeviceId).ToList();
         var totalToday = counts.Where(c => c.Date == today).Sum(c => c.Count);
         var totalWeek = counts.Where(c => c.Date >= weekStart).Sum(c => c.Count);
         var totalAllTime = counts.Sum(c => c.Count);
-        var byDish = counts.GroupBy(c => c.DishType).Select(g => new { dish = g.Key, count = g.Sum(x => x.Count) }).OrderByDescending(g => g.count).ToList();
-        var topDish = byDish.FirstOrDefault()?.dish ?? "khinkali";
+
+        // streak — same logic as /api/stats
+        var activeDays = counts
+            .GroupBy(x => x.Date)
+            .Where(g => g.Sum(x => x.Count) > 0)
+            .Select(g => g.Key)
+            .OrderByDescending(d => d)
+            .ToList();
+        int streak = 0;
+        var check = today;
+        foreach (var day in activeDays)
+        {
+            if (day == check) { streak++; check = check.AddDays(-1); }
+            else if (day < check) break;
+        }
+
+        // byDish — all 4 dishes, even if 0
+        var byDish = allDishKeys.Select(dishKey =>
+        {
+            var dc = counts.Where(c => c.DishType == dishKey).ToList();
+            return new
+            {
+                dish = dishKey,
+                today = dc.Where(c => c.Date == today).Sum(c => c.Count),
+                week = dc.Where(c => c.Date >= weekStart).Sum(c => c.Count),
+                allTime = dc.Sum(c => c.Count)
+            };
+        }).ToList();
+
+        // topDish + badge
+        var byDishAllTime = counts.GroupBy(c => c.DishType)
+            .Select(g => new { dish = g.Key, count = g.Sum(x => x.Count) })
+            .OrderByDescending(g => g.count).ToList();
+        var topDish = byDishAllTime.FirstOrDefault()?.dish ?? "khinkali";
         var badge = badges.ContainsKey(topDish) ? badges[topDish] : new { ka = "🍽 დამწყები", en = "🍽 Rookie" };
-        return new { friendCode = fd.FriendCode, nickname = fd.Nickname, totalToday, totalWeek, totalAllTime, badge, topDish };
+
+        return new { friendCode = fd.FriendCode, nickname = fd.Nickname, totalToday, totalWeek, totalAllTime, badge, topDish, streak, byDish };
     }).ToList();
     return Results.Ok(result);
 });

@@ -130,6 +130,8 @@ const i18n = {
     friendsCodePlaceholder: 'კოდი...', friendsAdd: '+ დამატება',
     friendsNone: 'ჯერ მეგობარი არ გყავს', friendsHint: 'გაუზიარე კოდი მეგობრებს!',
     friendsToday: 'დღეს', friendsWeek: 'კვირა',
+    fpBack: 'უკან', fpAllTime: 'სულ', fpByDish: 'დეტალები',
+    fpVsYou: 'შენთან შედარება', fpDayStreak: 'დღის სერია',
 
         // share modal
         smTitle: '📸 გაზიარება',
@@ -154,6 +156,8 @@ const i18n = {
         statsPersonal: 'Your Stats', statsGlobal: 'Global Stats',
         statsTotalFood: 'total eaten', statsPeople: 'people',
         statsNone: 'nothing yet',
+        fpBack: 'Back', fpAllTime: 'All time', fpByDish: 'By dish',
+        fpVsYou: 'vs You', fpDayStreak: 'day streak',
         // share modal
         smTitle: '📸 Share',
         smLocationLabel: '📍 Location',
@@ -187,6 +191,10 @@ function applyLang() {
     updateDishHint();
     updateBanner();
     if (dom.statsPanel.classList.contains('open')) renderStatsPanel();
+    if (dom.friendProfilePanel.classList.contains('open') && openProfileFriendIdx >= 0) {
+        dom.friendProfileBody.innerHTML = buildFriendProfileHTML(friendsList[openProfileFriendIdx]);
+        dom.friendProfileBackLabel.textContent = t('fpBack');
+    }
 }
 
 // ── State ──
@@ -216,6 +224,7 @@ let currentLbPeriod = 'alltime';
 let myFriendCode = '';
 let myNickname = '';
 let friendsList = [];
+let openProfileFriendIdx = -1;
 
 // ── Animations via Web Animations API (zero reflow) ──
 const wobbleKeyframes = [
@@ -905,6 +914,103 @@ function closeStatsPanel() {
     document.body.style.overflow = '';
 }
 
+function buildFriendProfileHTML(f) {
+    const dishNames = {
+        khinkali: { ka: 'ხინკალი', en: 'Khinkali' },
+        khachapuri: { ka: 'ხაჭაპური', en: 'Khachapuri' },
+        qababi: { ka: 'ქაბაბი', en: 'Qababi' },
+        lobiani: { ka: 'ლობიანი', en: 'Lobiani' }
+    };
+    const displayName = f.nickname || f.friendCode;
+    const badge = f.badge ? (f.badge[lang] || f.badge.en || '') : '';
+    const streakHtml = (f.streak >= 2)
+        ? `<div class="fp-hero-streak">🔥 ${f.streak} ${t('fpDayStreak')}</div>` : '';
+
+    const myToday = Object.values(dishCounts).reduce((s, d) => s + d.today, 0);
+    const theirToday = f.totalToday ?? 0;
+    const theirWeek = f.totalWeek ?? 0;
+    const theirAllTime = f.totalAllTime ?? 0;
+
+    let comparison = '';
+    if (myToday === 0 && theirToday === 0) {
+        comparison = lang === 'ka' ? 'არც შენ, არც ის...' : 'Both slacking...';
+    } else if (myToday === 0) {
+        comparison = lang === 'ka' ? `გასწია ${theirToday}-ით!` : `They're ahead by ${theirToday}!`;
+    } else if (theirToday === 0) {
+        comparison = lang === 'ka' ? `შენ გასწევ ${myToday}-ით!` : `You're ahead by ${myToday}!`;
+    } else {
+        const ratio = (myToday / theirToday).toFixed(1);
+        if (ratio > 1.2) {
+            comparison = lang === 'ka' ? `${ratio}×-ით მეტი გაქვს!` : `You ate ${ratio}× more!`;
+        } else if (ratio < 0.8) {
+            const theirRatio = (theirToday / myToday).toFixed(1);
+            comparison = lang === 'ka' ? `მათ ${theirRatio}×-ით მეტი აქვთ!` : `They ate ${theirRatio}× more!`;
+        } else {
+            comparison = lang === 'ka' ? 'თითქმის თანაბარი ხართ!' : 'Almost equal!';
+        }
+    }
+
+    const byDishRows = (f.byDish || [])
+        .filter(d => d.allTime > 0)
+        .map(d => {
+            const name = dishNames[d.dish]?.[lang] || d.dish;
+            return `<div class="fp-dish-row">
+                <img src="/images/${d.dish}.png" alt="">
+                <div class="fp-dish-row-info">
+                    <div class="fp-dish-row-name">${name}</div>
+                    <div class="fp-dish-row-counts">${t('fpAllTime')}: ${d.allTime}</div>
+                </div>
+                <div class="fp-dish-row-today">${d.today > 0 ? d.today : ''}</div>
+            </div>`;
+        }).join('');
+
+    const byDishSection = byDishRows
+        ? `<div class="fp-section-label">${t('fpByDish')}</div>
+           <div class="fp-dish-list">${byDishRows}</div>`
+        : '';
+
+    return `
+        <div class="fp-hero">
+            <img class="fp-hero-img" src="/images/${f.topDish || 'khinkali'}.png" alt="">
+            <div class="fp-hero-code">${f.friendCode}</div>
+            <div class="fp-hero-name">${displayName}</div>
+            <div class="fp-hero-badge">${badge}</div>
+            ${streakHtml}
+        </div>
+        <div class="fp-stats-row">
+            <div class="fp-stat-box">
+                <span class="fp-stat-box-num">${theirToday}</span>
+                <span class="fp-stat-box-lbl">${t('today')}</span>
+            </div>
+            <div class="fp-stat-box">
+                <span class="fp-stat-box-num">${theirWeek}</span>
+                <span class="fp-stat-box-lbl">${t('thisWeek')}</span>
+            </div>
+            <div class="fp-stat-box">
+                <span class="fp-stat-box-num">${theirAllTime}</span>
+                <span class="fp-stat-box-lbl">${t('fpAllTime')}</span>
+            </div>
+        </div>
+        ${byDishSection}
+        <div class="fp-section-label">${t('fpVsYou')}</div>
+        <div class="fp-comparison">${comparison}</div>
+    `;
+}
+
+function openFriendProfile(idx) {
+    const f = friendsList[idx];
+    if (!f) return;
+    openProfileFriendIdx = idx;
+    dom.friendProfileBody.innerHTML = buildFriendProfileHTML(f);
+    dom.friendProfileBackLabel.textContent = t('fpBack');
+    dom.friendProfilePanel.classList.add('open');
+}
+
+function closeFriendProfile() {
+    dom.friendProfilePanel.classList.remove('open');
+    openProfileFriendIdx = -1;
+}
+
 function renderStatsPanel() {
     // Badge
     const badge = getPersonalityBadge();
@@ -1006,6 +1112,7 @@ dom.langBtn.addEventListener('click', () => { lang = lang === 'ka' ? 'en' : 'ka'
 // Stats panel
 dom.statsLink.addEventListener('click', (e) => { e.preventDefault(); openStatsPanel(); });
 dom.statsPanelClose.addEventListener('click', closeStatsPanel);
+dom.friendProfileClose.addEventListener('click', closeFriendProfile);
 dom.statsPanelLangBtn.addEventListener('click', () => { lang = lang === 'ka' ? 'en' : 'ka'; applyLang(); });
 
 // Share modal
@@ -1125,6 +1232,7 @@ async function loadFriends() {
         const res = await fetch(`/api/friends/${deviceId}?localDate=${localDate}`);
         if (res.ok) {
             friendsList = await res.json();
+            if (openProfileFriendIdx >= 0) closeFriendProfile();
         }
     } catch (e) {
         console.log(e);
@@ -1153,7 +1261,7 @@ function renderFriends() {
 
     const myToday = Object.values(dishCounts).reduce((s, d) => s + d.today, 0);
 
-    container.innerHTML = friendsList.map(f => {
+    container.innerHTML = friendsList.map((f, idx) => {
         const theirToday = f.totalToday ?? 0;
         const theirWeek = f.totalWeek ?? 0;
         let comparison = '';
@@ -1177,7 +1285,8 @@ function renderFriends() {
 
         const badge = f.badge ? (f.badge[lang] || f.badge.en || '') : '';
         return `
-            <div class="sp-friend-card">
+            <div class="sp-friend-card" data-friend-idx="${idx}">
+                <span class="sp-friend-card-chevron">›</span>
                 <div class="sp-friend-header">
                     <span class="sp-friend-name">${f.nickname || 'Friend ' + f.friendCode}</span>
                     <span class="sp-friend-badge">${badge}</span>
@@ -1196,6 +1305,10 @@ function renderFriends() {
             </div>
         `;
     }).join('');
+
+    container.querySelectorAll('.sp-friend-card').forEach(card => {
+        card.addEventListener('click', () => openFriendProfile(parseInt(card.dataset.friendIdx, 10)));
+    });
 }
 
 // ── Offline ──
