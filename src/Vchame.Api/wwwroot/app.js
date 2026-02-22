@@ -11,13 +11,13 @@ const dishes = [
         en: { name: 'Khinkali', unit: 'pcs' },
         moods: {
             ka: [
-                { max: 0, text: 'მშიერი ხარ?' },
+                { max: 0, text: 'გშია?' },
                 { max: 3, text: 'კარგი დასაწყისი!' },
-                { max: 8, text: 'ნორმალური ტემპი' },
-                { max: 15, text: 'შენელდი ცოტა...' },
+                { max: 8, text: 'კარგი ტემპია' },
+                { max: 15, text: 'ცოტა შეანელე...' },
                 { max: 25, text: 'ძმაო...' },
                 { max: 40, text: 'ოჯახი მყავს!' },
-                { max: Infinity, text: 'მონსტრი ხარ' },
+                { max: Infinity, text: 'მხეცი ხარ' },
             ],
             en: [
                 { max: 0, text: 'hungry?' },
@@ -38,11 +38,11 @@ const dishes = [
             ka: [
                 { max: 0, text: 'ყველი დაგავიწყდა?' },
                 { max: 2, text: 'კარგი დასაწყისი!' },
-                { max: 4, text: 'ნორმალური' },
-                { max: 7, text: 'მეტი ყველი?' },
-                { max: 12, text: 'დაიწვი...' },
-                { max: 20, text: 'კარდიოლოგთან!' },
-                { max: Infinity, text: 'საშიშია' },
+                { max: 4, text: 'ნორმალური ტემპია' },
+                { max: 7, text: 'კიდევ გინდა?' },
+                { max: 12, text: 'დატორმუზე...' },
+                { max: 20, text: 'პირდაპირ კარდიოლოგთან!' },
+                { max: Infinity, text: 'უკვე საშიშია' },
             ],
             en: [
                 { max: 0, text: 'forgot cheese?' },
@@ -61,13 +61,13 @@ const dishes = [
         en: { name: 'Qababi', unit: 'pcs' },
         moods: {
             ka: [
-                { max: 0, text: 'ჯერ არ დაგეწყო?' },
-                { max: 2, text: 'სათავი აიღე!' },
-                { max: 5, text: 'კარგად მიდის' },
-                { max: 9, text: 'რამდენს იკეთებ?' },
-                { max: 15, text: 'შეჩერდი...' },
-                { max: 25, text: 'გადაჭარბება არის' },
-                { max: Infinity, text: 'ზღვარი გადალახე' },
+                { max: 0, text: 'ჯერ არ დაგიწყია?' },
+                { max: 2, text: 'მიდი, დაიწყე!' },
+                { max: 5, text: 'კარგად მიდიხარ' },
+                { max: 9, text: 'კიდევ შეგიძლია?' },
+                { max: 15, text: 'გაჩერდი...' },
+                { max: 25, text: 'უკვე ზედმეტია' },
+                { max: Infinity, text: 'საზღვრებს გასცდი' },
             ],
             en: [
                 { max: 0, text: 'not started yet?' },
@@ -86,13 +86,13 @@ const dishes = [
         en: { name: 'Lobiani', unit: 'slices' },
         moods: {
             ka: [
-                { max: 0, text: 'ლობიოს არ გჭირდება?' },
+                { max: 0, text: 'ლობიო არ გინდა?' },
                 { max: 2, text: 'კარგი დასაწყისი!' },
                 { max: 4, text: 'ლობიოს სეზონია' },
                 { max: 7, text: 'მეტი ლობიო!' },
-                { max: 12, text: 'ნელა, ნელა...' },
-                { max: 20, text: 'შეჩერდი!' },
-                { max: Infinity, text: 'ლობიოს ტრაგედია' },
+                { max: 12, text: 'ნელ-ნელა...' },
+                { max: 20, text: 'გაჩერდი!' },
+                { max: Infinity, text: 'ლობიოს ოვერდოზი' },
             ],
             en: [
                 { max: 0, text: 'no beans needed?' },
@@ -271,30 +271,30 @@ const ROAST_THRESHOLDS = [5, 10, 15, 20, 30];
 const ROASTS = {
     khinkali: {
         5:  { ka: 'ჯერ კარგად ხარ... 😅', en: 'still doing fine... 😅' },
-        10: { ka: 'კუჭი გაფრთხილება გამოაგზავნა 📨', en: 'your stomach filed for divorce 📨' },
+        10: { ka: 'კუჭმა განქორწინება მოითხოვა 📨', en: 'your stomach filed for divorce 📨' },
         15: { ka: 'ხინკლის ლეგენდა 👑', en: 'khinkali legend unlocked 👑' },
         20: { ka: 'ეს კვება კი არა, ცხოვრების სტილია 💀', en: 'this is a lifestyle not a meal 💀' },
         30: { ka: 'ძმაო... 🫡', en: 'bro... 🫡' },
     },
     khachapuri: {
-        5:  { ka: 'ყველი დასახლდა 🧀', en: 'cheese has entered the chat 🧀' },
-        10: { ka: 'ყველი კოლეგა გახდი 🫡', en: 'you and cheese are besties now 🫡' },
-        15: { ka: 'სისხლი ყველია 🩸', en: 'your blood type is now cheese 🩸' },
-        20: { ka: 'კარდიოლოგი ტირის 😭', en: 'your cardiologist is crying 😭' },
+        5:  { ka: 'ყველი შემოვიდა ჩატში 🧀', en: 'cheese has entered the chat 🧀' },
+        10: { ka: 'შენ და ყველი საუკეთესო მეგობრები ხართ 🫡', en: 'you and cheese are besties now 🫡' },
+        15: { ka: 'სისხლის ჯგუფი: ყველი 🩸', en: 'your blood type is now cheese 🩸' },
+        20: { ka: 'კარდიოლოგი უკვე ტირის 😭', en: 'your cardiologist is crying 😭' },
         30: { ka: 'ხაჭაპური = შენ 🧬', en: 'khachapuri = you at this point 🧬' },
     },
     qababi: {
-        5:  { ka: 'კარგი გახურება 🔥', en: 'nice warmup 🔥' },
-        10: { ka: 'კაბაბის ოსტატი ხარ 🥩', en: 'grill master activated 🥩' },
-        15: { ka: 'ბუხარი გახდი 🔥', en: 'you ARE the grill now 🔥' },
-        20: { ka: 'ქაბაბი ყოველდღიური ვიტამინია? 💊', en: 'is qababi your daily vitamin? 💊' },
+        5:  { ka: 'კარგი გახურებაა 🔥', en: 'nice warmup 🔥' },
+        10: { ka: 'მაყლის ოსტატი ხარ 🥩', en: 'grill master activated 🥩' },
+        15: { ka: 'თავად მაყალი ხარ უკვე 🔥', en: 'you ARE the grill now 🔥' },
+        20: { ka: 'ქაბაბი შენი ვიტამინია? 💊', en: 'is qababi your daily vitamin? 💊' },
         30: { ka: 'ვინ ხარ?! 😶', en: 'who ARE you?! 😶' },
     },
     lobiani: {
         5:  { ka: 'ლობიო ბედნიერია 🫘', en: 'the beans are pleased 🫘' },
-        10: { ka: 'ლობიანის სახელი ხარ 🏷', en: 'the bean chose you 🏷' },
-        15: { ka: 'ლობიო სიცოცხლეა 🌿', en: 'beans are your religion now 🌿' },
-        20: { ka: 'ლობიოს ნაციონალური გმირი 🎖', en: 'national bean hero 🎖' },
+        10: { ka: 'ლობიომ აგირჩია 🏷', en: 'the bean chose you 🏷' },
+        15: { ka: 'ლობიო შენი რელიგიაა 🌿', en: 'beans are your religion now 🌿' },
+        20: { ka: 'ლობიოს ეროვნული გმირი 🎖', en: 'national bean hero 🎖' },
         30: { ka: 'ლობიო = ლობიანი = შენ 🌀', en: 'bean = lobiani = you 🌀' },
     },
 };
@@ -392,8 +392,8 @@ function getPersonalityBadge() {
     const badges = {
         khinkali:  { ka: '🥟 ხინკლის მამა', en: '🥟 Khinkali Lord' },
         khachapuri: { ka: '🧀 ყველის ბოსი', en: '🧀 Cheese Brain' },
-        qababi:    { ka: '🔥 კაბაბის ოსტატი', en: '🔥 Grill Master' },
-        lobiani:   { ka: '🫘 ლობიანის მოყვარული', en: '🫘 Bean Lover' },
+        qababi:    { ka: '🔥 მაყლის ოსტატი', en: '🔥 Grill Master' },
+        lobiani:   { ka: '🫘 ლობიანის ფანატიკოსი', en: '🫘 Bean Lover' },
     };
     return badges[dominant?.key] || { ka: '🍽 დამწყები', en: '🍽 Rookie' };
 }
