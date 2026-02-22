@@ -124,7 +124,13 @@ const i18n = {
         statsPersonal: 'შენი სტატისტიკა', statsGlobal: 'გლობალური სტატისტიკა',
         statsTotalFood: 'სულ საჭმელი', statsPeople: 'ადამიანი',
         statsNone: 'ჯერ არაფერი',
-        statsFriends: 'მეგობრები', friendsYourCode: 'შენი კოდი', friendsCopy: 'კოპირება', friendsNicknamePlaceholder: 'შენი სახელი...', friendsSave: 'შენახვა', friendsCodePlaceholder: 'კოდი...', friendsAdd: '+ დამატება', friendsNone: 'ჯერ მეგობარი არ გყავს', friendsHint: 'გაუზიარე კოდი მეგობრებს!', friendsToday: 'დღეს', friendsWeek: 'კვირა',
+    // Friends
+    statsFriends: 'მეგობრები', friendsYourCode: 'შენი კოდი', friendsCopy: 'კოპირება',
+    friendsNicknamePlaceholder: 'შენი სახელი...', friendsSave: 'შენახვა',
+    friendsCodePlaceholder: 'კოდი...', friendsAdd: '+ დამატება',
+    friendsNone: 'ჯერ მეგობარი არ გყავს', friendsHint: 'გაუზიარე კოდი მეგობრებს!',
+    friendsToday: 'დღეს', friendsWeek: 'კვირა',
+
         // share modal
         smTitle: '📸 გაზიარება',
         smLocationLabel: '📍 მდებარეობა',
@@ -148,7 +154,6 @@ const i18n = {
         statsPersonal: 'Your Stats', statsGlobal: 'Global Stats',
         statsTotalFood: 'total eaten', statsPeople: 'people',
         statsNone: 'nothing yet',
-        statsFriends: 'Friends', friendsYourCode: 'Your code', friendsCopy: 'Copy', friendsNicknamePlaceholder: 'Your name...', friendsSave: 'Save', friendsCodePlaceholder: 'Code...', friendsAdd: '+ Add', friendsNone: 'No friends yet', friendsHint: 'Share your code with friends!', friendsToday: 'today', friendsWeek: 'week',
         // share modal
         smTitle: '📸 Share',
         smLocationLabel: '📍 Location',
@@ -181,7 +186,7 @@ function applyLang() {
     updateMood();
     updateDishHint();
     updateBanner();
-    if (dom.statsPanel.classList.contains('open')) { renderStatsPanel(); if (activeStatsTab === 'friends') renderFriends(); }
+    if (dom.statsPanel.classList.contains('open')) renderStatsPanel();
 }
 
 // ── State ──
@@ -208,9 +213,6 @@ let currentStreak = 0;
 let leaderboardData = [];
 let activeStatsTab = 'personal';
 let currentLbPeriod = 'alltime';
-let myFriendCode = '';
-let myNickname = '';
-let friendsList = [];
 
 // ── Animations via Web Animations API (zero reflow) ──
 const wobbleKeyframes = [
@@ -560,6 +562,7 @@ async function loadLeaderboard(period) {
         const data = await (await fetch(`/api/leaderboard?deviceId=${encodeURIComponent(deviceId)}&period=${period}`)).json();
         leaderboardData = data;
         renderLeaderboard();
+    renderFriends();
     } catch {}
 }
 
@@ -884,23 +887,12 @@ async function shareCard(locationText = '', photoImg = null) {
     }, 'image/png');
 }
 
-
-async function loadMyFriendCode() { try { const data = await (await fetch(`/api/friend-code/${deviceId}`)).json(); myFriendCode = data.code; myNickname = data.nickname || ''; } catch {} }
-async function setNickname(nickname) { try { const data = await fetch('/api/set-nickname', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId, nickname }) }).then(r => r.json()); myNickname = data.nickname || ''; myFriendCode = data.friendCode; } catch {} }
-async function addFriend(friendCode) { try { const res = await fetch('/api/add-friend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId, friendCode }) }); if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed'); return false; } return true; } catch { return false; } }
-async function loadFriends() { try { friendsList = await (await fetch(`/api/friends/${deviceId}?localDate=${localDate()}`)).json(); } catch {} }
-function renderFriends() { if (!dom.spFriendsCode) return; dom.spFriendsCode.textContent = myFriendCode; if (dom.spFriendsNickname) { dom.spFriendsNickname.value = myNickname; dom.spFriendsNickname.placeholder = t('friendsNicknamePlaceholder'); } if (!dom.spFriendsList) return; if (friendsList.length === 0) { dom.spFriendsList.innerHTML = `<div class="sp-friends-empty"><p>${t('friendsNone')}</p><p class="sp-hint">${t('friendsHint')}</p></div>`; return; } const myTotalToday = Object.values(dishCounts).reduce((s, d) => s + d.today, 0); dom.spFriendsList.innerHTML = friendsList.map(f => { const friendName = f.nickname || `Friend ${f.friendCode}`; const badge = f.badge[lang]; let comparison = ''; if (myTotalToday > 0 || f.totalToday > 0) { if (f.totalToday === 0) comparison = lang === 'ka' ? 'შენ იწყებ! 💪' : "You're ahead! 💪"; else if (myTotalToday === 0) comparison = lang === 'ka' ? 'დაიწყე! 🔥' : 'Start eating! 🔥'; else { const ratio = myTotalToday / f.totalToday; if (ratio > 2) comparison = lang === 'ka' ? `შენ ${Math.round(ratio)}x მეტი ჭამე! 💪` : `You ate ${Math.round(ratio)}x more! 💪`; else if (ratio > 1.2) comparison = lang === 'ka' ? 'შენ უფრო მეტი ჭამე 😎' : 'You ate more 😎'; else if (ratio < 0.5) comparison = lang === 'ka' ? `${friendName} ${Math.round(1/ratio)}x მეტი ჭამა! 🔥` : `${friendName} ate ${Math.round(1/ratio)}x more! 🔥`; else if (ratio < 0.8) comparison = lang === 'ka' ? `${friendName} უფრო მეტი ჭამა 💀` : `${friendName} ate more 💀`; else comparison = lang === 'ka' ? 'თანაბრად ჭამთ!' : "You're tied!"; } } return `<div class="sp-friend-card"><div class="sp-friend-header"><span class="sp-friend-name">${friendName}</span><span class="sp-friend-badge">${badge}</span></div><div class="sp-friend-stats"><div class="sp-stat"><span class="sp-stat-num">${f.totalToday}</span><span class="sp-stat-lbl">${t('friendsToday')}</span></div><div class="sp-stat"><span class="sp-stat-num">${f.totalWeek}</span><span class="sp-stat-lbl">${t('friendsWeek')}</span></div></div>${comparison ? `<div class="sp-comparison">${comparison}</div>` : ''}</div>`; }).join(''); }
-
 // ── Stats panel ──
 function openStatsPanel() {
     dom.statsPanel.classList.add('open');
     document.body.style.overflow = 'hidden';
     renderStatsPanel();
     loadLeaderboard(currentLbPeriod);
-    loadMyFriendCode().then(() => renderFriends());
-    loadFriends().then(() => renderFriends());
-    loadMyFriendCode().then(() => renderFriends());
-    loadFriends().then(() => renderFriends());
 }
 
 function closeStatsPanel() {
@@ -1085,11 +1077,6 @@ document.querySelectorAll('.sp-lb-period').forEach(btn => {
     });
 });
 
-
-if (dom.spFriendsSaveNickname) dom.spFriendsSaveNickname.addEventListener('click', async () => { await setNickname(dom.spFriendsNickname.value.trim()); renderFriends(); });
-if (dom.spFriendsCopyCode) dom.spFriendsCopyCode.addEventListener('click', () => { navigator.clipboard?.writeText(myFriendCode); const btn = dom.spFriendsCopyCode; const orig = btn.textContent; btn.textContent = '✓'; setTimeout(() => btn.textContent = orig, 1000); });
-if (dom.spFriendsAddBtn) dom.spFriendsAddBtn.addEventListener('click', async () => { const code = dom.spFriendsAddInput.value.trim().toUpper(); if (!code) return; if (await addFriend(code)) { dom.spFriendsAddInput.value = ''; await loadFriends(); renderFriends(); } });
-
 // ── Offline ──
 function showOfflineBanner() {
     dom.offlineBanner.style.display = '';
@@ -1109,6 +1096,45 @@ window.addEventListener('online', () => {
     loadGlobal();
 });
 
+
+// ── Friends event listeners ──
+document.getElementById('spFriendsSaveNickname')?.addEventListener('click', async () => {
+    const input = document.getElementById('spFriendsNickname');
+    const nickname = input.value.trim();
+    if (nickname) {
+        await setNickname(nickname);
+        myNickname = nickname;
+        renderFriends();
+    }
+});
+
+document.getElementById('spFriendsCopyCode')?.addEventListener('click', () => {
+    const codeText = document.getElementById('spFriendsCode').textContent;
+    if (navigator.clipboard && codeText) {
+        navigator.clipboard.writeText(codeText).then(() => {
+            const btn = document.getElementById('spFriendsCopyCode');
+            const originalText = btn.textContent;
+            btn.textContent = lang === 'ka' ? '✓ დაკოპირდა' : '✓ Copied';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        });
+    }
+});
+
+document.getElementById('spFriendsAddBtn')?.addEventListener('click', async () => {
+    const input = document.getElementById('spFriendsAddInput');
+    const friendCode = input.value.trim().toUpperCase();
+    if (friendCode && friendCode.length === 6) {
+        const result = await addFriend(friendCode);
+        if (result) {
+            input.value = '';
+            await loadFriends();
+            renderFriends();
+        }
+    }
+});
+
 // ── Init ──
 // Restore cached counts instantly (no zero-flash for returning users)
 try {
@@ -1117,46 +1143,7 @@ try {
         const parsed = JSON.parse(cached);
         Object.keys(dishCounts).forEach(dish => {
             if (parsed[dish]) dishCounts[dish] = parsed[dish];
-        
-// Friends event listeners
-document.getElementById('save-nickname-btn')?.addEventListener('click', async () => {
-  const input = document.getElementById('nickname-input');
-  const nickname = input.value.trim();
-  if (nickname) {
-    await setNickname(nickname);
-    myNickname = nickname;
-    renderFriends();
-  }
-});
-
-document.getElementById('copy-code-btn')?.addEventListener('click', () => {
-  const codeText = document.getElementById('my-friend-code').textContent;
-  if (navigator.clipboard && codeText) {
-    navigator.clipboard.writeText(codeText).then(() => {
-      const btn = document.getElementById('copy-code-btn');
-      const originalText = btn.textContent;
-      btn.textContent = lang === 'ka' ? '✓ დაკოპირდა' : '✓ Copied';
-      setTimeout(() => {
-        btn.textContent = originalText;
-      }, 2000);
-    });
-  }
-});
-
-document.getElementById('add-friend-btn')?.addEventListener('click', async () => {
-  const input = document.getElementById('friend-code-input');
-  const friendCode = input.value.trim().toUpperCase();
-  if (friendCode && friendCode.length === 6) {
-    const result = await addFriend(friendCode);
-    if (result) {
-      input.value = '';
-      await loadFriends();
-      renderFriends();
-    }
-  }
-});
-
-});
+        });
         updateAllCounters();
         updateMood();
     }
