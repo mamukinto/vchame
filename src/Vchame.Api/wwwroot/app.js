@@ -1175,6 +1175,7 @@ document.querySelectorAll('.sp-tab').forEach(tab => {
         dom.spPersonalSection.style.display = activeStatsTab === 'personal' ? '' : 'none';
         dom.spGlobalSection.style.display = activeStatsTab === 'global' ? '' : 'none';
         dom.spFriendsSection.style.display = activeStatsTab === 'friends' ? '' : 'none';
+        if (activeStatsTab === 'friends') loadFriends().then(renderFriends);
     });
 });
 
@@ -1228,7 +1229,7 @@ async function addFriend(friendCode) {
 
 async function loadFriends() {
     try {
-        const localDate = new Date().toISOString().split('T')[0];
+        const localDate = localDateStr();
         const res = await fetch(`/api/friends/${deviceId}?localDate=${localDate}`);
         if (res.ok) {
             friendsList = await res.json();
