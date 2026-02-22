@@ -1085,7 +1085,7 @@ async function loadMyFriendCode() {
         const res = await fetch(`/api/friend-code/${deviceId}`);
         if (res.ok) {
             const data = await res.json();
-            myFriendCode = data.friendCode;
+            myFriendCode = data.code;
             myNickname = data.nickname || '';
         }
     } catch (e) {}

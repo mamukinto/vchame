@@ -228,7 +228,7 @@ api.MapPost("/set-nickname", async (SetNicknameRequest req, AppDb db) =>
     var device = await db.Devices.FindAsync(req.DeviceId);
     if (device is null)
     {
-        device = new Device { DeviceId = req.DeviceId, FriendCode = GenerateFriendCode(req.DeviceId), Nickname = nickname, CreatedAt = DateTime.UtcNow };
+        device = new Device { DeviceId = req.DeviceId, FriendCode = GenerateFriendCode(req.DeviceId), Nickname = nickname };
         db.Devices.Add(device);
     }
     else { device.Nickname = nickname; }
@@ -241,7 +241,7 @@ api.MapGet("/friend-code/{deviceId}", async (string deviceId, AppDb db) =>
     var device = await db.Devices.FindAsync(deviceId);
     if (device is null)
     {
-        device = new Device { DeviceId = deviceId, FriendCode = GenerateFriendCode(deviceId), Nickname = null, CreatedAt = DateTime.UtcNow };
+        device = new Device { DeviceId = deviceId, FriendCode = GenerateFriendCode(deviceId), Nickname = null };
         db.Devices.Add(device);
         await db.SaveChangesAsync();
     }
@@ -257,7 +257,7 @@ api.MapPost("/add-friend", async (AddFriendRequest req, AppDb db) =>
     if (friendDevice.DeviceId == req.DeviceId) return Results.BadRequest(new { error = "Cannot add yourself" });
     var existing = await db.Friends.FirstOrDefaultAsync(f => f.DeviceId == req.DeviceId && f.FriendDeviceId == friendDevice.DeviceId);
     if (existing is not null) return Results.Ok(new { success = true, alreadyAdded = true });
-    db.Friends.Add(new Friend { DeviceId = req.DeviceId, FriendDeviceId = friendDevice.DeviceId, AddedAt = DateTime.UtcNow });
+    db.Friends.Add(new Friend { DeviceId = req.DeviceId, FriendDeviceId = friendDevice.DeviceId });
     await db.SaveChangesAsync();
     return Results.Ok(new { success = true });
 });
@@ -341,7 +341,6 @@ public class Device
     public required string DeviceId { get; set; }
     public string? Nickname { get; set; }
     public required string FriendCode { get; set; }
-    public DateTime CreatedAt { get; set; }
 }
 
 public class Friend
@@ -349,7 +348,6 @@ public class Friend
     public int Id { get; set; }
     public required string DeviceId { get; set; }
     public required string FriendDeviceId { get; set; }
-    public DateTime AddedAt { get; set; }
 }
 
 public record EatRequest(string DeviceId, int Count, string DishType = "khinkali", string? LocalDate = null);
