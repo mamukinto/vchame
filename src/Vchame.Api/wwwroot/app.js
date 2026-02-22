@@ -1065,8 +1065,7 @@ document.querySelectorAll('.sp-tab').forEach(tab => {
         tab.classList.add('active');
         dom.spPersonalSection.style.display = activeStatsTab === 'personal' ? '' : 'none';
         dom.spGlobalSection.style.display = activeStatsTab === 'global' ? '' : 'none';
-        dom.spLeaderboardSection.style.display = activeStatsTab === 'leaderboard' ? '' : 'none';
-        if (activeStatsTab === 'leaderboard') loadLeaderboard(currentLbPeriod);
+        dom.spFriendsSection.style.display = activeStatsTab === 'friends' ? '' : 'none';
     });
 });
 
