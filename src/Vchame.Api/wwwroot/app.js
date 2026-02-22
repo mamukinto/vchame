@@ -893,6 +893,9 @@ function openStatsPanel() {
     document.body.style.overflow = 'hidden';
     renderStatsPanel();
     loadLeaderboard(currentLbPeriod);
+    loadMyFriendCode().then(() => {
+        loadFriends().then(renderFriends);
+    });
 }
 
 function closeStatsPanel() {
@@ -1076,6 +1079,118 @@ document.querySelectorAll('.sp-lb-period').forEach(btn => {
         loadLeaderboard(currentLbPeriod);
     });
 });
+
+// ── Friends ──
+async function loadMyFriendCode() {
+    try {
+        const res = await fetch(`/api/friend-code/${deviceId}`);
+        if (res.ok) {
+            const data = await res.json();
+            myFriendCode = data.friendCode;
+            myNickname = data.nickname || '';
+        }
+    } catch (e) {}
+}
+
+async function setNickname(nickname) {
+    try {
+        const res = await fetch('/api/set-nickname', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, nickname })
+        });
+        return res.ok;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function addFriend(friendCode) {
+    try {
+        const res = await fetch('/api/add-friend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, friendCode })
+        });
+        return res.ok;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function loadFriends() {
+    try {
+        const localDate = new Date().toISOString().split('T')[0];
+        const res = await fetch(`/api/friends/${deviceId}?localDate=${localDate}`);
+        if (res.ok) {
+            friendsList = await res.json();
+        }
+    } catch (e) {}
+}
+
+function renderFriends() {
+    const container = document.getElementById('spFriendsList');
+    const codeEl = document.getElementById('spFriendsCode');
+    const nicknameInput = document.getElementById('spFriendsNickname');
+
+    if (codeEl) codeEl.textContent = myFriendCode || '------';
+    if (nicknameInput) nicknameInput.value = myNickname;
+
+    if (!container) return;
+
+    if (friendsList.length === 0) {
+        container.innerHTML = `
+            <div class="sp-friends-empty">
+                <div class="sp-friends-empty-title">${i18n[lang].friendsNone}</div>
+                <div class="sp-friends-empty-hint">${i18n[lang].friendsHint}</div>
+            </div>
+        `;
+        return;
+    }
+
+    const myToday = dishCounts[currentDish];
+
+    container.innerHTML = friendsList.map(f => {
+        let comparison = '';
+        if (myToday === 0 && f.todayCount === 0) {
+            comparison = lang === 'ka' ? 'არც შენ, არც ის...' : 'Both slacking...';
+        } else if (myToday === 0) {
+            comparison = lang === 'ka' ? `გასწია ${f.todayCount}-ით!` : `They're ahead by ${f.todayCount}!`;
+        } else if (f.todayCount === 0) {
+            comparison = lang === 'ka' ? `შენ გასწევ ${myToday}-ით!` : `You're ahead by ${myToday}!`;
+        } else {
+            const ratio = (myToday / f.todayCount).toFixed(1);
+            if (ratio > 1.2) {
+                comparison = lang === 'ka' ? `${ratio}×-ით მეტი გაქვს!` : `You ate ${ratio}× more!`;
+            } else if (ratio < 0.8) {
+                const theirRatio = (f.todayCount / myToday).toFixed(1);
+                comparison = lang === 'ka' ? `მათ ${theirRatio}×-ით მეტი აქვთ!` : `They ate ${theirRatio}× more!`;
+            } else {
+                comparison = lang === 'ka' ? 'თითქმის თანაბარი ხართ!' : 'Almost equal!';
+            }
+        }
+
+        return `
+            <div class="sp-friend-card">
+                <div class="sp-friend-header">
+                    <span class="sp-friend-name">${f.nickname || 'Friend ' + f.friendCode}</span>
+                    <span class="sp-friend-badge">${f.badge || ''}</span>
+                </div>
+                <div class="sp-friend-stats">
+                    <div class="sp-friend-stat">
+                        <span class="sp-friend-stat-label">${i18n[lang].friendsToday}</span>
+                        <span class="sp-friend-stat-value">${f.todayCount}</span>
+                    </div>
+                    <div class="sp-friend-stat">
+                        <span class="sp-friend-stat-label">${i18n[lang].friendsWeek}</span>
+                        <span class="sp-friend-stat-value">${f.weekCount}</span>
+                    </div>
+                </div>
+                <div class="sp-friend-comparison">${comparison}</div>
+            </div>
+        `;
+    }).join('');
+}
 
 // ── Offline ──
 function showOfflineBanner() {
