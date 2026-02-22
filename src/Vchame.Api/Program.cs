@@ -33,6 +33,26 @@ using (var scope = app.Services.CreateScope())
                 END IF;
             END $$;
             """);
+
+        // Idempotent migration: create Devices and Friends tables
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS "Devices" (
+                "DeviceId" text PRIMARY KEY,
+                "Nickname" text,
+                "FriendCode" text NOT NULL,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS "Friends" (
+                "Id" serial PRIMARY KEY,
+                "DeviceId" text NOT NULL,
+                "FriendDeviceId" text NOT NULL,
+                "AddedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+                UNIQUE ("DeviceId", "FriendDeviceId")
+            );
+
+            CREATE INDEX IF NOT EXISTS "IX_Friends_DeviceId" ON "Friends" ("DeviceId");
+            """);
     }
 }
 
