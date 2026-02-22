@@ -213,6 +213,9 @@ let currentStreak = 0;
 let leaderboardData = [];
 let activeStatsTab = 'personal';
 let currentLbPeriod = 'alltime';
+let myFriendCode = '';
+let myNickname = '';
+let friendsList = [];
 
 // ── Animations via Web Animations API (zero reflow) ──
 const wobbleKeyframes = [
@@ -562,7 +565,6 @@ async function loadLeaderboard(period) {
         const data = await (await fetch(`/api/leaderboard?deviceId=${encodeURIComponent(deviceId)}&period=${period}`)).json();
         leaderboardData = data;
         renderLeaderboard();
-    renderFriends();
     } catch {}
 }
 
@@ -1124,7 +1126,9 @@ async function loadFriends() {
         if (res.ok) {
             friendsList = await res.json();
         }
-    } catch (e) {}
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 function renderFriends() {
@@ -1147,42 +1151,45 @@ function renderFriends() {
         return;
     }
 
-    const myToday = dishCounts[currentDish];
+    const myToday = Object.values(dishCounts).reduce((s, d) => s + d.today, 0);
 
     container.innerHTML = friendsList.map(f => {
+        const theirToday = f.totalToday ?? 0;
+        const theirWeek = f.totalWeek ?? 0;
         let comparison = '';
-        if (myToday === 0 && f.todayCount === 0) {
+        if (myToday === 0 && theirToday === 0) {
             comparison = lang === 'ka' ? 'არც შენ, არც ის...' : 'Both slacking...';
         } else if (myToday === 0) {
-            comparison = lang === 'ka' ? `გასწია ${f.todayCount}-ით!` : `They're ahead by ${f.todayCount}!`;
-        } else if (f.todayCount === 0) {
+            comparison = lang === 'ka' ? `გასწია ${theirToday}-ით!` : `They're ahead by ${theirToday}!`;
+        } else if (theirToday === 0) {
             comparison = lang === 'ka' ? `შენ გასწევ ${myToday}-ით!` : `You're ahead by ${myToday}!`;
         } else {
-            const ratio = (myToday / f.todayCount).toFixed(1);
+            const ratio = (myToday / theirToday).toFixed(1);
             if (ratio > 1.2) {
                 comparison = lang === 'ka' ? `${ratio}×-ით მეტი გაქვს!` : `You ate ${ratio}× more!`;
             } else if (ratio < 0.8) {
-                const theirRatio = (f.todayCount / myToday).toFixed(1);
+                const theirRatio = (theirToday / myToday).toFixed(1);
                 comparison = lang === 'ka' ? `მათ ${theirRatio}×-ით მეტი აქვთ!` : `They ate ${theirRatio}× more!`;
             } else {
                 comparison = lang === 'ka' ? 'თითქმის თანაბარი ხართ!' : 'Almost equal!';
             }
         }
 
+        const badge = f.badge ? (f.badge[lang] || f.badge.en || '') : '';
         return `
             <div class="sp-friend-card">
                 <div class="sp-friend-header">
                     <span class="sp-friend-name">${f.nickname || 'Friend ' + f.friendCode}</span>
-                    <span class="sp-friend-badge">${f.badge || ''}</span>
+                    <span class="sp-friend-badge">${badge}</span>
                 </div>
                 <div class="sp-friend-stats">
                     <div class="sp-friend-stat">
                         <span class="sp-friend-stat-label">${i18n[lang].friendsToday}</span>
-                        <span class="sp-friend-stat-value">${f.todayCount}</span>
+                        <span class="sp-friend-stat-value">${theirToday}</span>
                     </div>
                     <div class="sp-friend-stat">
                         <span class="sp-friend-stat-label">${i18n[lang].friendsWeek}</span>
-                        <span class="sp-friend-stat-value">${f.weekCount}</span>
+                        <span class="sp-friend-stat-value">${theirWeek}</span>
                     </div>
                 </div>
                 <div class="sp-friend-comparison">${comparison}</div>
@@ -1238,8 +1245,8 @@ document.getElementById('spFriendsCopyCode')?.addEventListener('click', () => {
 
 document.getElementById('spFriendsAddBtn')?.addEventListener('click', async () => {
     const input = document.getElementById('spFriendsAddInput');
-    const friendCode = input.value.trim().toUpperCase();
-    if (friendCode && friendCode.length === 6) {
+    const friendCode = input.value.trim();
+    if (friendCode && friendCode.length >= 6) {
         const result = await addFriend(friendCode);
         if (result) {
             input.value = '';

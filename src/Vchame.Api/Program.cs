@@ -69,11 +69,26 @@ DateOnly GetToday(string? localDate)
 
 string GenerateFriendCode(string deviceId)
 {
+    return GenerateReadableCode(deviceId);
+}
+
+string GenerateReadableCode(string deviceId)
+{
+    // 1. Simple, distinct word lists (Avoid words that sound similar)
+    string[] adjectives = { "Swift", "Brave", "Quiet", "Sunny", "Wild", "Clever" };
+    string[] nouns = { "Panda", "Fox", "Falcon", "River", "Moon", "Peak" };
+
     using var sha = SHA256.Create();
     var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(deviceId));
-    var num = BitConverter.ToUInt32(hash, 0);
-    var code = Convert.ToString(num % 2176782336, 36).ToUpper().PadLeft(6, '0');
-    return code[^6..];
+    
+    // 2. Pull multiple segments from the hash to pick words
+    // We use different byte offsets so the adjective and noun aren't linked
+    int adjIndex = BitConverter.ToUInt16(hash, 0) % adjectives.Length;
+    int nounIndex = BitConverter.ToUInt16(hash, 2) % nouns.Length;
+    int suffix = BitConverter.ToUInt16(hash, 4) % 10000; // 0-9999
+
+    // Result: "SwiftPanda4205"
+    return $"{adjectives[adjIndex]}{nouns[nounIndex]}{suffix:D4}";
 }
 
 var api = app.MapGroup("/api");
@@ -251,8 +266,8 @@ api.MapGet("/friend-code/{deviceId}", async (string deviceId, AppDb db) =>
 api.MapPost("/add-friend", async (AddFriendRequest req, AppDb db) =>
 {
     if (string.IsNullOrWhiteSpace(req.DeviceId) || string.IsNullOrWhiteSpace(req.FriendCode)) return Results.BadRequest();
-    var friendCode = req.FriendCode.Trim().ToUpper();
-    var friendDevice = await db.Devices.FirstOrDefaultAsync(d => d.FriendCode == friendCode);
+    var friendCode = req.FriendCode.Trim();
+    var friendDevice = await db.Devices.FirstOrDefaultAsync(d => d.FriendCode.ToLower() == friendCode.ToLower());
     if (friendDevice is null) return Results.NotFound(new { error = "Friend code not found" });
     if (friendDevice.DeviceId == req.DeviceId) return Results.BadRequest(new { error = "Cannot add yourself" });
     var existing = await db.Friends.FirstOrDefaultAsync(f => f.DeviceId == req.DeviceId && f.FriendDeviceId == friendDevice.DeviceId);
