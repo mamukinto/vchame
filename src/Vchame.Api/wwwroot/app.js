@@ -1005,7 +1005,7 @@ function openFriendProfile(idx) {
     dom.friendProfileBody.innerHTML = buildFriendProfileHTML(f);
     dom.friendProfileBackLabel.textContent = t('fpBack');
     dom.friendProfilePanel.classList.add('open');
-n    // Attach remove button handler
+    // Attach remove button handler
     setTimeout(() => {
         const removeBtn = document.getElementById('fpRemoveFriendBtn');
         if (removeBtn) {
