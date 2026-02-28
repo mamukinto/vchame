@@ -994,6 +994,7 @@ function buildFriendProfileHTML(f) {
         ${byDishSection}
         <div class="fp-section-label">${t('fpVsYou')}</div>
         <div class="fp-comparison">${comparison}</div>
+        <button id="fpRemoveFriendBtn" class="fp-remove-btn" data-friend-code="${f.friendCode}">${lang === 'ka' ? '🗑 მეგობრის წაშლა' : '🗑 Remove Friend'}</button>
     `;
 }
 
@@ -1004,6 +1005,24 @@ function openFriendProfile(idx) {
     dom.friendProfileBody.innerHTML = buildFriendProfileHTML(f);
     dom.friendProfileBackLabel.textContent = t('fpBack');
     dom.friendProfilePanel.classList.add('open');
+n    // Attach remove button handler
+    setTimeout(() => {
+        const removeBtn = document.getElementById('fpRemoveFriendBtn');
+        if (removeBtn) {
+            removeBtn.onclick = async () => {
+                const friendCode = f.friendCode;
+                const confirmMsg = lang === 'ka' ? 'ნამდვილად გინდა მეგობრის წაშლა?' : 'Remove this friend?';
+                if (confirm(confirmMsg)) {
+                    const success = await removeFriend(friendCode);
+                    if (success) {
+                        closeFriendProfile();
+                        await loadFriends();
+                        renderFriends();
+                    }
+                }
+            };
+        }
+    }, 0);
 }
 
 function closeFriendProfile() {
@@ -1230,6 +1249,19 @@ async function addFriend(friendCode) {
         return res.ok;
     } catch (e) {
         console.log('[DEBUG] addFriend() - Caught exception:', e.message, e);
+        return false;
+    }
+}
+nasync function removeFriend(friendCode) {
+    try {
+        const res = await fetch('/api/remove-friend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, friendCode })
+        });
+        return res.ok;
+    } catch (e) {
+        console.log('[ERROR] removeFriend() -', e);
         return false;
     }
 }

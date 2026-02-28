@@ -276,6 +276,18 @@ api.MapPost("/add-friend", async (AddFriendRequest req, AppDb db) =>
     await db.SaveChangesAsync();
     return Results.Ok(new { success = true });
 });
+api.MapPost("/remove-friend", async (AddFriendRequest req, AppDb db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.DeviceId) || string.IsNullOrWhiteSpace(req.FriendCode)) return Results.BadRequest();
+    var friendCode = req.FriendCode.Trim();
+    var friendDevice = await db.Devices.FirstOrDefaultAsync(d => d.FriendCode.ToLower() == friendCode.ToLower());
+    if (friendDevice is null) return Results.NotFound(new { error = "Friend not found" });
+    var friendship = await db.Friends.FirstOrDefaultAsync(f => f.DeviceId == req.DeviceId && f.FriendDeviceId == friendDevice.DeviceId);
+    if (friendship is null) return Results.NotFound(new { error = "Friendship not found" });
+    db.Friends.Remove(friendship);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { success = true });
+});
 // Debug endpoint to check Friends table
 api.MapGet("/debug/friends-raw", async (AppDb db) =>
 {

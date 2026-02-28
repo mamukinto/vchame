@@ -1370,3 +1370,26 @@ body {
     color: var(--text-dim); pointer-events: none;
 }
 .sp-friend-card:active { opacity: 0.75; }
+
+/* Remove friend button */
+.fp-remove-btn {
+    margin-top: 24px;
+    width: 100%;
+    padding: 14px 20px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.fp-remove-btn:hover {
+    background: #cc0000;
+}
+
+.fp-remove-btn:active {
+    transform: scale(0.98);
+}
