@@ -276,6 +276,16 @@ api.MapPost("/add-friend", async (AddFriendRequest req, AppDb db) =>
     await db.SaveChangesAsync();
     return Results.Ok(new { success = true });
 });
+// Debug endpoint to check Friends table
+api.MapGet("/debug/friends-raw", async (AppDb db) =>
+{
+    var allFriends = await db.Friends.ToListAsync();
+    var allDevices = await db.Devices.ToListAsync();
+    return Results.Ok(new { 
+        friendships = allFriends.Select(f => new { f.Id, f.DeviceId, f.FriendDeviceId, f.AddedAt }),
+        devices = allDevices.Select(d => new { d.DeviceId, d.FriendCode, d.Nickname, d.CreatedAt })
+    });
+});
 
 api.MapGet("/friends/{deviceId}", async (string deviceId, string? localDate, AppDb db) =>
 {

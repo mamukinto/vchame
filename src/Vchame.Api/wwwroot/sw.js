@@ -1,4 +1,4 @@
-const CACHE = 'vchame-v26';
+const CACHE = 'vchame-v27';
 const ASSETS = [
     '/',
     '/stats.html',

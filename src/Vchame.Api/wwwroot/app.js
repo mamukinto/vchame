@@ -1216,27 +1216,42 @@ async function setNickname(nickname) {
 
 async function addFriend(friendCode) {
     try {
+        console.log('[DEBUG] addFriend() - Attempting to add friend with code:', friendCode);
         const res = await fetch('/api/add-friend', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ deviceId, friendCode })
         });
+        console.log('[DEBUG] addFriend() - Response status:', res.status, 'OK:', res.ok);
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.log('[DEBUG] addFriend() - Error response:', errorText);
+        }
         return res.ok;
     } catch (e) {
+        console.log('[DEBUG] addFriend() - Caught exception:', e.message, e);
         return false;
     }
 }
 
 async function loadFriends() {
     try {
-        const localDate = localDateStr();
-        const res = await fetch(`/api/friends/${deviceId}?localDate=${localDate}`);
+        const ld = localDate();
+        const url = `/api/friends/${deviceId}?localDate=${ld}`;
+        console.log('[DEBUG] loadFriends() - Fetching from URL:', url);
+        const res = await fetch(url);
+        console.log('[DEBUG] loadFriends() - Response status:', res.status);
         if (res.ok) {
             friendsList = await res.json();
+            console.log('[DEBUG] loadFriends() - Successfully loaded', friendsList.length, 'friends');
+            console.log('[DEBUG] loadFriends() - Friends list content:', friendsList);
             if (openProfileFriendIdx >= 0) closeFriendProfile();
+        } else {
+            const errorText = await res.text();
+            console.log('[DEBUG] loadFriends() - Response not OK. Status:', res.status, 'Error:', errorText);
         }
     } catch (e) {
-        console.log(e);
+        console.log('[DEBUG] loadFriends() - Caught exception:', e.message, e);
     }
 }
 
