@@ -776,96 +776,92 @@ async function generateTemplateClean(ctx, w, h, opts) {
     const hasPhoto = !!opts.photoImg;
 
     if (hasPhoto) {
-        // Full-bleed photo top 60%
-        const photoH = h * 0.6;
-        ctx.save();
-        ctx.beginPath(); ctx.rect(0, 0, w, photoH); ctx.clip();
+        // Full-bleed photo covering entire card
         const img = opts.photoImg;
-        const sx = w / img.naturalWidth, sy = photoH / img.naturalHeight;
+        const sx = w / img.naturalWidth, sy = h / img.naturalHeight;
         const sc = Math.max(sx, sy);
         const dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
-        ctx.drawImage(img, (w - dw) / 2, (photoH - dh) / 2, dw, dh);
-        ctx.restore();
+        ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
 
-        // Dark gradient overlay at bottom of photo
-        const grad = ctx.createLinearGradient(0, photoH * 0.5, 0, photoH);
+        // Heavy dark gradient overlay on bottom half
+        const grad = ctx.createLinearGradient(0, h * 0.35, 0, h);
         grad.addColorStop(0, 'rgba(0,0,0,0)');
-        grad.addColorStop(1, 'rgba(0,0,0,0.7)');
+        grad.addColorStop(0.5, 'rgba(0,0,0,0.5)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.85)');
         ctx.fillStyle = grad;
-        ctx.fillRect(0, photoH * 0.5, w, photoH * 0.5);
+        ctx.fillRect(0, h * 0.35, w, h * 0.65);
 
-        // Big count over gradient
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#fff'; ctx.font = '800 180px -apple-system, sans-serif';
-        ctx.fillText(opts.totalToday.toString(), w / 2, photoH - 60);
 
-        // Subtitle
-        ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '600 36px -apple-system, sans-serif';
-        ctx.fillText(t('shareTitle').toUpperCase(), w / 2, photoH - 20);
+        // Title
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '600 36px -apple-system, sans-serif';
+        ctx.fillText(t('shareTitle').toUpperCase(), w / 2, h - 560);
 
-        // Bottom section: white/cream bg
-        ctx.fillStyle = '#faf8f5';
-        ctx.fillRect(0, photoH, w, h - photoH);
+        // Big white count
+        ctx.fillStyle = '#fff'; ctx.font = '800 200px -apple-system, sans-serif';
+        ctx.fillText(opts.totalToday.toString(), w / 2, h - 370);
 
         // Dish icons row
-        const dishY = photoH + 100;
-        const iconSize = 90;
-        const gap = 30;
-        const totalWidth = opts.activeDishes.length * iconSize + (opts.activeDishes.length - 1) * gap;
+        const dishY = h - 260;
+        const iconSize = 80;
+        const gap = 40;
+        const totalWidth = opts.activeDishes.length * (iconSize + gap) - gap;
         let startX = (w - totalWidth) / 2 + iconSize / 2;
         for (const dish of opts.activeDishes) {
             await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, startX, dishY, iconSize, iconSize);
-            ctx.fillStyle = '#333'; ctx.font = '800 32px -apple-system, sans-serif';
+            ctx.fillStyle = '#fff'; ctx.font = '800 28px -apple-system, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(dishCounts[dish.key].today.toString(), startX, dishY + iconSize / 2 + 36);
+            ctx.fillText(dishCounts[dish.key].today.toString(), startX, dishY + iconSize / 2 + 30);
             startX += iconSize + gap;
         }
 
         // Location
         if (opts.locationText) {
-            ctx.fillStyle = '#999'; ctx.font = '500 30px -apple-system, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('📍 ' + opts.locationText, w / 2, dishY + iconSize / 2 + 100);
+            ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 30px -apple-system, sans-serif';
+            ctx.fillText('📍 ' + opts.locationText, w / 2, h - 140);
         }
 
-        drawCardFooter(ctx, w, h, opts, 'rgba(0,0,0,0.2)', '#c9920a');
+        drawCardFooter(ctx, w, h, opts, 'rgba(255,255,255,0.25)', '#f5c518');
     } else {
-        // No photo: solid cream bg, huge count centered
-        ctx.fillStyle = '#faf8f5';
+        // No photo: dark minimal
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0d0d1a');
+        grad.addColorStop(1, '#1a1a2e');
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
 
         ctx.textAlign = 'center';
 
         // Title
-        ctx.fillStyle = '#bbb'; ctx.font = '600 40px -apple-system, sans-serif';
-        ctx.fillText(t('shareTitle').toUpperCase(), w / 2, 300);
+        ctx.fillStyle = '#555'; ctx.font = '600 40px -apple-system, sans-serif';
+        ctx.fillText(t('shareTitle').toUpperCase(), w / 2, 340);
 
-        // Huge count
-        ctx.fillStyle = '#1a1a2e'; ctx.font = '800 260px -apple-system, sans-serif';
-        ctx.fillText(opts.totalToday.toString(), w / 2, 640);
+        // Huge white count
+        ctx.fillStyle = '#fff'; ctx.font = '800 280px -apple-system, sans-serif';
+        ctx.fillText(opts.totalToday.toString(), w / 2, 680);
 
-        // Dish icons row below count
-        const dishY = 800;
+        // Dish icons row
+        const dishY = 860;
         const iconSize = 120;
         const gap = 40;
-        const totalWidth = opts.activeDishes.length * iconSize + (opts.activeDishes.length - 1) * gap;
+        const totalWidth = opts.activeDishes.length * (iconSize + gap) - gap;
         let startX = (w - totalWidth) / 2 + iconSize / 2;
         for (const dish of opts.activeDishes) {
             await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, startX, dishY, iconSize, iconSize);
-            ctx.fillStyle = '#555'; ctx.font = '700 28px -apple-system, sans-serif';
+            ctx.fillStyle = '#888'; ctx.font = '700 26px -apple-system, sans-serif';
             ctx.fillText(dish[lang].name, startX, dishY + iconSize / 2 + 36);
-            ctx.fillStyle = '#1a1a2e'; ctx.font = '800 40px -apple-system, sans-serif';
+            ctx.fillStyle = '#fff'; ctx.font = '800 40px -apple-system, sans-serif';
             ctx.fillText(dishCounts[dish.key].today.toString(), startX, dishY + iconSize / 2 + 76);
             startX += iconSize + gap;
         }
 
         // Location
         if (opts.locationText) {
-            ctx.fillStyle = '#aaa'; ctx.font = '500 30px -apple-system, sans-serif';
-            ctx.fillText('📍 ' + opts.locationText, w / 2, h - 260);
+            ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.font = '500 30px -apple-system, sans-serif';
+            ctx.fillText('📍 ' + opts.locationText, w / 2, h - 240);
         }
 
-        drawCardFooter(ctx, w, h, opts, 'rgba(0,0,0,0.15)', '#c9920a');
+        drawCardFooter(ctx, w, h, opts);
     }
 }
 
@@ -1288,27 +1284,32 @@ function goToCard(idx) {
 })();
 
 dom.scClose.addEventListener('click', closeCarousel);
-dom.scShareBtn.addEventListener('click', () => {
-    const canvas = document.getElementById('scCard' + carouselIdx);
-    canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'vchame-stats.png', { type: 'image/png' });
-        if (navigator.canShare?.({ files: [file] })) {
-            try { await navigator.share({ files: [file] }); } catch {}
-        }
-    }, 'image/png');
+
+let _carouselBlobs = [null, null, null, null];
+
+dom.scShareBtn.addEventListener('click', async () => {
+    const blob = _carouselBlobs[carouselIdx];
+    if (!blob) return;
+    const file = new File([blob], 'vchame-stats.png', { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) {
+        try { await navigator.share({ files: [file] }); } catch {}
+    }
 });
 
 async function renderAllTemplates(locationText, photoImg) {
     const opts = getShareOpts(locationText, photoImg);
     const w = 1080, h = 1920;
-    await Promise.all(TEMPLATES.map(async (fn, i) => {
-        const canvas = document.getElementById('scCard' + i);
+    for (let i = 0; i < TEMPLATES.length; i++) {
+        const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, w, h);
-        await fn(ctx, w, h, opts);
-    }));
+        await TEMPLATES[i](ctx, w, h, opts);
+        // Convert to dataURL for display in img tag
+        document.getElementById('scImg' + i).src = canvas.toDataURL('image/jpeg', 0.92);
+        // Store blob for sharing
+        _carouselBlobs[i] = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    }
 }
 
 // ── Stats panel ──
