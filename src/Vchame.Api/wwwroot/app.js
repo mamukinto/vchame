@@ -1252,7 +1252,7 @@ async function addFriend(friendCode) {
         return false;
     }
 }
-nasync function removeFriend(friendCode) {
+async function removeFriend(friendCode) {
     try {
         const res = await fetch('/api/remove-friend', {
             method: 'POST',
