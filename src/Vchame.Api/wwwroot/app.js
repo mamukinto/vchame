@@ -758,16 +758,16 @@ function getShareOpts(locationText, photoImg) {
 function drawCardFooter(ctx, w, h, opts, textColor = 'rgba(255,255,255,0.3)', accentColor = '#f5c518') {
     ctx.textAlign = 'center';
     ctx.fillStyle = textColor; ctx.font = '600 36px -apple-system, sans-serif';
-    ctx.fillText('vchame.ge', w / 2, h - 160);
+    ctx.fillText('vchame.ge', w / 2, h - 120);
     ctx.fillStyle = textColor; ctx.font = '28px -apple-system, sans-serif';
-    ctx.fillText(t('shareWatermark'), w / 2, h - 110);
+    ctx.fillText(t('shareWatermark'), w / 2, h - 80);
     if (currentStreak >= 2) {
         ctx.fillStyle = accentColor; ctx.font = '800 30px -apple-system, sans-serif';
-        ctx.fillText(`🔥 Day ${currentStreak}`, w / 2, h - 60);
+        ctx.fillText(`🔥 Day ${currentStreak}`, w / 2, h - 40);
     }
     if (opts.totalAll > 0) {
         ctx.fillStyle = accentColor; ctx.font = '800 26px -apple-system, sans-serif';
-        ctx.fillText(opts.badge[lang], w / 2, h - 30);
+        ctx.fillText(opts.badge[lang], w / 2, h - 10);
     }
 }
 
@@ -795,14 +795,14 @@ async function generateTemplateClean(ctx, w, h, opts) {
 
         // Title
         ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '600 36px -apple-system, sans-serif';
-        ctx.fillText(t('shareTitle').toUpperCase(), w / 2, h - 560);
+        ctx.fillText(t('shareTitle').toUpperCase(), w / 2, h - 640);
 
         // Big white count
         ctx.fillStyle = '#fff'; ctx.font = '800 200px -apple-system, sans-serif';
-        ctx.fillText(opts.totalToday.toString(), w / 2, h - 370);
+        ctx.fillText(opts.totalToday.toString(), w / 2, h - 440);
 
         // Dish icons row
-        const dishY = h - 260;
+        const dishY = h - 330;
         const iconSize = 80;
         const gap = 40;
         const totalWidth = opts.activeDishes.length * (iconSize + gap) - gap;
@@ -818,7 +818,7 @@ async function generateTemplateClean(ctx, w, h, opts) {
         // Location
         if (opts.locationText) {
             ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 30px -apple-system, sans-serif';
-            ctx.fillText('📍 ' + opts.locationText, w / 2, h - 140);
+            ctx.fillText('📍 ' + opts.locationText, w / 2, h - 180);
         }
 
         drawCardFooter(ctx, w, h, opts, 'rgba(255,255,255,0.25)', '#f5c518');
@@ -858,7 +858,7 @@ async function generateTemplateClean(ctx, w, h, opts) {
         // Location
         if (opts.locationText) {
             ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.font = '500 30px -apple-system, sans-serif';
-            ctx.fillText('📍 ' + opts.locationText, w / 2, h - 240);
+            ctx.fillText('📍 ' + opts.locationText, w / 2, h - 190);
         }
 
         drawCardFooter(ctx, w, h, opts);
@@ -984,7 +984,7 @@ async function generateTemplateNeon(ctx, w, h, opts) {
 
     if (!hasPhoto && opts.locationText) {
         ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = '500 34px -apple-system, sans-serif';
-        ctx.fillText('📍 ' + opts.locationText, w / 2, h - 220);
+        ctx.fillText('📍 ' + opts.locationText, w / 2, h - 190);
     }
 
     drawCardFooter(ctx, w, h, opts);
@@ -1041,10 +1041,10 @@ async function generateTemplateRetro(ctx, w, h, opts) {
     // Big count — bold serif
     ctx.fillStyle = '#2c1810';
     ctx.font = 'italic 800 200px Georgia, serif';
-    ctx.fillText(opts.totalToday.toString(), w / 2, contentY + 220);
+    ctx.fillText(opts.totalToday.toString(), w / 2, contentY + 260);
 
     // Dish details
-    const dishY = contentY + 320;
+    const dishY = contentY + 400;
     const iconSize = 100;
     const gap = 50;
     const totalWidth = opts.activeDishes.length * iconSize + (opts.activeDishes.length - 1) * gap;
@@ -1053,16 +1053,16 @@ async function generateTemplateRetro(ctx, w, h, opts) {
     for (const dish of opts.activeDishes) {
         await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, startX, dishY, iconSize, iconSize);
         ctx.fillStyle = '#5a4a3a'; ctx.font = 'italic 24px Georgia, serif';
-        ctx.fillText(dish[lang].name, startX, dishY + iconSize / 2 + 32);
+        ctx.fillText(dish[lang].name, startX, dishY + iconSize / 2 + 36);
         ctx.fillStyle = '#2c1810'; ctx.font = 'italic 800 36px Georgia, serif';
-        ctx.fillText(dishCounts[dish.key].today.toString(), startX, dishY + iconSize / 2 + 70);
+        ctx.fillText(dishCounts[dish.key].today.toString(), startX, dishY + iconSize / 2 + 78);
         startX += iconSize + gap;
     }
 
     // Location as stamp
     if (opts.locationText && !hasPhoto) {
         ctx.save();
-        ctx.translate(w / 2, h - 340);
+        ctx.translate(w / 2, h - 220);
         ctx.rotate(-0.03);
         ctx.strokeStyle = '#8b4513';
         ctx.lineWidth = 3;
