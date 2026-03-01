@@ -1,7 +1,8 @@
-const CACHE = 'vchame-v33';
+const CACHE = 'vchame-v34';
 const ASSETS = [
     '/',
     '/stats.html',
+    '/privacy.html',
     '/style.css',
     '/app.js',
     '/icon.svg',

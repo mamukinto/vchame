@@ -373,6 +373,13 @@ app.MapGet("/stats", context =>
         Path.Combine(app.Environment.WebRootPath, "stats.html"));
 });
 
+app.MapGet("/privacy", context =>
+{
+    context.Response.ContentType = "text/html";
+    return context.Response.SendFileAsync(
+        Path.Combine(app.Environment.WebRootPath, "privacy.html"));
+});
+
 app.MapFallback(context =>
 {
     context.Response.ContentType = "text/html";
