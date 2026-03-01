@@ -140,6 +140,8 @@ const i18n = {
         smPhotoLabel: '🖼 ფოტო (სურვილისამებრ)',
         shareAddPhoto: '+ ფოტოს დამატება', sharePhotoRemove: '✕ წაშლა',
         shareGenerate: '📸 გენერირება',
+        scTitle: 'აირჩიე სტილი',
+        scShare: 'გაზიარება',
     },
     en: {
         tapHint: 'tap me!', today: 'today', thisWeek: 'this week',
@@ -165,6 +167,8 @@ const i18n = {
         smPhotoLabel: '🖼 Photo (optional)',
         shareAddPhoto: '+ Add photo', sharePhotoRemove: '✕ Remove',
         shareGenerate: '📸 Generate card',
+        scTitle: 'Pick a style',
+        scShare: 'Share',
     },
 };
 
@@ -187,6 +191,8 @@ function applyLang() {
     dom.smLocationLabel.textContent = t('smLocationLabel');
     dom.smPhotoLabel.textContent = t('smPhotoLabel');
     dom.shareLocation.placeholder = t('smLocationPlaceholder');
+    dom.scTitle.textContent = t('scTitle');
+    dom.scShareLabel.textContent = t('scShare');
     updateMood();
     updateDishHint();
     updateBanner();
@@ -737,12 +743,135 @@ function drawPolaroid(ctx, img, x, y, w, h, caption) {
     ctx.restore();
 }
 
-// ── Share card (multi-dish) ──
-async function generateShareCard(locationText = '', photoImg = null) {
-    const canvas = dom.shareCanvas;
-    const ctx = canvas.getContext('2d');
-    const w = 1080, h = 1920;
-    const hasPhoto = !!photoImg;
+// ── Share card templates ──
+function getShareOpts(locationText, photoImg) {
+    const activeDishes = dishes.filter(d => dishCounts[d.key].today > 0);
+    const totalToday = Object.values(dishCounts).reduce((s, d) => s + d.today, 0);
+    const totalWeek = Object.values(dishCounts).reduce((s, d) => s + d.week, 0);
+    const totalMonth = Object.values(dishCounts).reduce((s, d) => s + d.month, 0);
+    const totalAll = Object.values(dishCounts).reduce((s, d) => s + d.allTime, 0);
+    const badge = getPersonalityBadge();
+    return { locationText, photoImg, activeDishes, totalToday, totalWeek, totalMonth, totalAll, badge };
+}
+
+// Shared: draw watermark + badge + streak at bottom of any template
+function drawCardFooter(ctx, w, h, opts, textColor = 'rgba(255,255,255,0.3)', accentColor = '#f5c518') {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = textColor; ctx.font = '600 36px -apple-system, sans-serif';
+    ctx.fillText('vchame.ge', w / 2, h - 160);
+    ctx.fillStyle = textColor; ctx.font = '28px -apple-system, sans-serif';
+    ctx.fillText(t('shareWatermark'), w / 2, h - 110);
+    if (currentStreak >= 2) {
+        ctx.fillStyle = accentColor; ctx.font = '800 30px -apple-system, sans-serif';
+        ctx.fillText(`🔥 Day ${currentStreak}`, w / 2, h - 60);
+    }
+    if (opts.totalAll > 0) {
+        ctx.fillStyle = accentColor; ctx.font = '800 26px -apple-system, sans-serif';
+        ctx.fillText(opts.badge[lang], w / 2, h - 30);
+    }
+}
+
+// ── Template 0: "Clean" — photo-hero, minimal ──
+async function generateTemplateClean(ctx, w, h, opts) {
+    const hasPhoto = !!opts.photoImg;
+
+    if (hasPhoto) {
+        // Full-bleed photo top 60%
+        const photoH = h * 0.6;
+        ctx.save();
+        ctx.beginPath(); ctx.rect(0, 0, w, photoH); ctx.clip();
+        const img = opts.photoImg;
+        const sx = w / img.naturalWidth, sy = photoH / img.naturalHeight;
+        const sc = Math.max(sx, sy);
+        const dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+        ctx.drawImage(img, (w - dw) / 2, (photoH - dh) / 2, dw, dh);
+        ctx.restore();
+
+        // Dark gradient overlay at bottom of photo
+        const grad = ctx.createLinearGradient(0, photoH * 0.5, 0, photoH);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.7)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, photoH * 0.5, w, photoH * 0.5);
+
+        // Big count over gradient
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fff'; ctx.font = '800 180px -apple-system, sans-serif';
+        ctx.fillText(opts.totalToday.toString(), w / 2, photoH - 60);
+
+        // Subtitle
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '600 36px -apple-system, sans-serif';
+        ctx.fillText(t('shareTitle').toUpperCase(), w / 2, photoH - 20);
+
+        // Bottom section: white/cream bg
+        ctx.fillStyle = '#faf8f5';
+        ctx.fillRect(0, photoH, w, h - photoH);
+
+        // Dish icons row
+        const dishY = photoH + 100;
+        const iconSize = 90;
+        const gap = 30;
+        const totalWidth = opts.activeDishes.length * iconSize + (opts.activeDishes.length - 1) * gap;
+        let startX = (w - totalWidth) / 2 + iconSize / 2;
+        for (const dish of opts.activeDishes) {
+            await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, startX, dishY, iconSize, iconSize);
+            ctx.fillStyle = '#333'; ctx.font = '800 32px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(dishCounts[dish.key].today.toString(), startX, dishY + iconSize / 2 + 36);
+            startX += iconSize + gap;
+        }
+
+        // Location
+        if (opts.locationText) {
+            ctx.fillStyle = '#999'; ctx.font = '500 30px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('📍 ' + opts.locationText, w / 2, dishY + iconSize / 2 + 100);
+        }
+
+        drawCardFooter(ctx, w, h, opts, 'rgba(0,0,0,0.2)', '#c9920a');
+    } else {
+        // No photo: solid cream bg, huge count centered
+        ctx.fillStyle = '#faf8f5';
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.textAlign = 'center';
+
+        // Title
+        ctx.fillStyle = '#bbb'; ctx.font = '600 40px -apple-system, sans-serif';
+        ctx.fillText(t('shareTitle').toUpperCase(), w / 2, 300);
+
+        // Huge count
+        ctx.fillStyle = '#1a1a2e'; ctx.font = '800 260px -apple-system, sans-serif';
+        ctx.fillText(opts.totalToday.toString(), w / 2, 640);
+
+        // Dish icons row below count
+        const dishY = 800;
+        const iconSize = 120;
+        const gap = 40;
+        const totalWidth = opts.activeDishes.length * iconSize + (opts.activeDishes.length - 1) * gap;
+        let startX = (w - totalWidth) / 2 + iconSize / 2;
+        for (const dish of opts.activeDishes) {
+            await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, startX, dishY, iconSize, iconSize);
+            ctx.fillStyle = '#555'; ctx.font = '700 28px -apple-system, sans-serif';
+            ctx.fillText(dish[lang].name, startX, dishY + iconSize / 2 + 36);
+            ctx.fillStyle = '#1a1a2e'; ctx.font = '800 40px -apple-system, sans-serif';
+            ctx.fillText(dishCounts[dish.key].today.toString(), startX, dishY + iconSize / 2 + 76);
+            startX += iconSize + gap;
+        }
+
+        // Location
+        if (opts.locationText) {
+            ctx.fillStyle = '#aaa'; ctx.font = '500 30px -apple-system, sans-serif';
+            ctx.fillText('📍 ' + opts.locationText, w / 2, h - 260);
+        }
+
+        drawCardFooter(ctx, w, h, opts, 'rgba(0,0,0,0.15)', '#c9920a');
+    }
+}
+
+// ── Template 1: "Neon" — dark bg, glowing accents (current card, improved) ──
+async function generateTemplateNeon(ctx, w, h, opts) {
+    const hasPhoto = !!opts.photoImg;
 
     // Background gradient
     const grad = ctx.createLinearGradient(0, 0, w, h);
@@ -769,7 +898,7 @@ async function generateShareCard(locationText = '', photoImg = null) {
     if (hasPhoto) {
         const pw = 800, ph = 620;
         const px = (w - pw) / 2;
-        drawPolaroid(ctx, photoImg, px, 60, pw, ph, locationText);
+        drawPolaroid(ctx, opts.photoImg, px, 60, pw, ph, opts.locationText);
         titleY = 60 + ph + 56;
         dishStartY = titleY + 52;
     }
@@ -779,29 +908,26 @@ async function generateShareCard(locationText = '', photoImg = null) {
     ctx.fillStyle = '#888'; ctx.font = `600 ${titleFont}px -apple-system, sans-serif`;
     ctx.fillText(t('shareTitle').toUpperCase(), w / 2, titleY);
 
-    // Active dishes
-    const activeDishes = dishes.filter(d => dishCounts[d.key].today > 0);
-
-    if (activeDishes.length === 0) {
+    if (opts.activeDishes.length === 0) {
         ctx.fillStyle = '#666'; ctx.font = 'italic 40px -apple-system, sans-serif';
         ctx.fillText('...', w / 2, h / 2);
-        return canvas;
+        return;
     }
 
-    // Layout: 2-col grid, scale down when photo present
+    // Layout: 2-col grid
     const dishSize = hasPhoto ? 140 : 200;
     const countFont = hasPhoto ? 60 : 80;
     const nameFont = hasPhoto ? 24 : 28;
-    const countOffset = hasPhoto ? 90 : 122; // px below dish center for count text
+    const countOffset = hasPhoto ? 90 : 122;
     const dishGap = hasPhoto ? 60 : 70;
     const rowStep = dishSize + countOffset + (hasPhoto ? 30 : 40) + dishGap;
-    const cols = activeDishes.length === 1 ? 1 : 2;
-    const rows = Math.ceil(activeDishes.length / cols);
+    const cols = opts.activeDishes.length === 1 ? 1 : 2;
+    const rows = Math.ceil(opts.activeDishes.length / cols);
     const gridWidth = cols * dishSize + (cols - 1) * dishGap;
     const startX = w / 2 - gridWidth / 2 + dishSize / 2;
 
-    for (let i = 0; i < activeDishes.length; i++) {
-        const dish = activeDishes[i];
+    for (let i = 0; i < opts.activeDishes.length; i++) {
+        const dish = opts.activeDishes[i];
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = startX + col * (dishSize + dishGap);
@@ -812,37 +938,40 @@ async function generateShareCard(locationText = '', photoImg = null) {
         ctx.fillStyle = '#eee'; ctx.font = `600 ${nameFont}px -apple-system, sans-serif`;
         ctx.fillText(dish[lang].name, x, y + dishSize / 2 + (hasPhoto ? 30 : 42));
 
-        const nameOffset = hasPhoto ? 30 : 42;
-        const cg = ctx.createLinearGradient(x - 50, y + dishSize / 2 + nameOffset + 10, x + 50, y + dishSize / 2 + countOffset);
+        // Neon glow count
+        const nameOff = hasPhoto ? 30 : 42;
+        ctx.save();
+        ctx.shadowColor = '#f5c518';
+        ctx.shadowBlur = 30;
+        const cg = ctx.createLinearGradient(x - 50, y + dishSize / 2 + nameOff + 10, x + 50, y + dishSize / 2 + countOffset);
         cg.addColorStop(0, '#f5c518'); cg.addColorStop(1, '#e94560');
         ctx.fillStyle = cg; ctx.font = `800 ${countFont}px -apple-system, sans-serif`;
         ctx.fillText(dishCounts[dish.key].today.toString(), x, y + dishSize / 2 + countOffset);
+        ctx.restore();
     }
 
-    // Combined totals
-    const totalToday = Object.values(dishCounts).reduce((sum, d) => sum + d.today, 0);
-    const totalWeek = Object.values(dishCounts).reduce((sum, d) => sum + d.week, 0);
-    const totalMonth = Object.values(dishCounts).reduce((sum, d) => sum + d.month, 0);
-    const totalAll = Object.values(dishCounts).reduce((sum, d) => sum + d.allTime, 0);
-
-    // Bottom of dish grid
+    // Combined total
     const dishesBottom = dishStartY + (rows - 1) * rowStep + dishSize / 2 + countOffset;
     const statsY = dishesBottom + (hasPhoto ? 70 : 100);
 
     ctx.fillStyle = '#888'; ctx.font = '600 36px -apple-system, sans-serif';
     ctx.fillText(t('shareToday').toUpperCase(), w / 2, statsY);
 
+    ctx.save();
+    ctx.shadowColor = '#f5c518';
+    ctx.shadowBlur = 40;
     const cgBig = ctx.createLinearGradient(w / 2 - 150, statsY + 20, w / 2 + 150, statsY + 140);
     cgBig.addColorStop(0, '#f5c518'); cgBig.addColorStop(1, '#e94560');
     ctx.fillStyle = cgBig; ctx.font = '800 140px -apple-system, sans-serif';
-    ctx.fillText(totalToday.toString(), w / 2, statsY + 130);
+    ctx.fillText(opts.totalToday.toString(), w / 2, statsY + 130);
+    ctx.restore();
 
-    // Small stats cards — only when no photo (photo shifts everything down)
+    // Stats cards (no photo only)
     if (!hasPhoto) {
         const stats = [
-            { label: t('shareWeek').toUpperCase(), value: totalWeek },
-            { label: t('shareMonth').toUpperCase(), value: totalMonth },
-            { label: t('shareAll').toUpperCase(), value: totalAll },
+            { label: t('shareWeek').toUpperCase(), value: opts.totalWeek },
+            { label: t('shareMonth').toUpperCase(), value: opts.totalMonth },
+            { label: t('shareAll').toUpperCase(), value: opts.totalAll },
         ];
         const cardY = statsY + 200, cardW = 280, cardH = 160, gap = 30;
         const sx = (w - (cardW * 3 + gap * 2)) / 2;
@@ -857,45 +986,329 @@ async function generateShareCard(locationText = '', photoImg = null) {
         });
     }
 
-    // Location text (only when no photo — with photo it's the polaroid caption)
-    if (!hasPhoto && locationText) {
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
-        ctx.font = '500 34px -apple-system, sans-serif';
-        ctx.fillText('📍 ' + locationText, w / 2, h - 220);
+    if (!hasPhoto && opts.locationText) {
+        ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = '500 34px -apple-system, sans-serif';
+        ctx.fillText('📍 ' + opts.locationText, w / 2, h - 220);
+    }
+
+    drawCardFooter(ctx, w, h, opts);
+}
+
+// ── Template 2: "Retro Film" — polaroid / analog aesthetic ──
+async function generateTemplateRetro(ctx, w, h, opts) {
+    const hasPhoto = !!opts.photoImg;
+
+    // Warm beige paper bg
+    ctx.fillStyle = '#f4efe4';
+    ctx.fillRect(0, 0, w, h);
+
+    // Subtle paper texture (noise dots)
+    ctx.globalAlpha = 0.03;
+    for (let i = 0; i < 3000; i++) {
+        const nx = Math.random() * w, ny = Math.random() * h;
+        ctx.fillStyle = Math.random() > 0.5 ? '#000' : '#8b7355';
+        ctx.fillRect(nx, ny, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.textAlign = 'center';
+
+    // Polaroid photo if provided (tilted)
+    let contentY = 160;
+    if (hasPhoto) {
+        ctx.save();
+        ctx.translate(w / 2, 400);
+        ctx.rotate(-0.05);
+        ctx.translate(-w / 2, -400);
+        const pw = 700, ph = 560;
+        const px = (w - pw) / 2;
+        drawPolaroid(ctx, opts.photoImg, px, 100, pw, ph, opts.locationText);
+        ctx.restore();
+
+        // Tape effect on top corner
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = '#d4c9a8';
+        ctx.translate(w / 2 + 200, 110);
+        ctx.rotate(0.3);
+        ctx.fillRect(-50, -12, 100, 24);
+        ctx.restore();
+
+        contentY = 720;
+    }
+
+    // Title — handwriting style
+    ctx.fillStyle = '#5a4a3a';
+    ctx.font = 'italic 600 44px Georgia, serif';
+    ctx.fillText(t('shareTitle'), w / 2, contentY);
+
+    // Big count — bold serif
+    ctx.fillStyle = '#2c1810';
+    ctx.font = 'italic 800 200px Georgia, serif';
+    ctx.fillText(opts.totalToday.toString(), w / 2, contentY + 220);
+
+    // Dish details
+    const dishY = contentY + 320;
+    const iconSize = 100;
+    const gap = 50;
+    const totalWidth = opts.activeDishes.length * iconSize + (opts.activeDishes.length - 1) * gap;
+    let startX = (w - totalWidth) / 2 + iconSize / 2;
+
+    for (const dish of opts.activeDishes) {
+        await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, startX, dishY, iconSize, iconSize);
+        ctx.fillStyle = '#5a4a3a'; ctx.font = 'italic 24px Georgia, serif';
+        ctx.fillText(dish[lang].name, startX, dishY + iconSize / 2 + 32);
+        ctx.fillStyle = '#2c1810'; ctx.font = 'italic 800 36px Georgia, serif';
+        ctx.fillText(dishCounts[dish.key].today.toString(), startX, dishY + iconSize / 2 + 70);
+        startX += iconSize + gap;
+    }
+
+    // Location as stamp
+    if (opts.locationText && !hasPhoto) {
+        ctx.save();
+        ctx.translate(w / 2, h - 340);
+        ctx.rotate(-0.03);
+        ctx.strokeStyle = '#8b4513';
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath(); ctx.roundRect(-200, -30, 400, 60, 8); ctx.stroke();
+        ctx.fillStyle = '#8b4513';
+        ctx.font = '600 28px Georgia, serif';
+        ctx.globalAlpha = 0.6;
+        ctx.fillText('📍 ' + opts.locationText, 0, 8);
+        ctx.restore();
+    }
+
+    drawCardFooter(ctx, w, h, opts, 'rgba(0,0,0,0.15)', '#8b4513');
+}
+
+// ── Template 3: "Chaos / Meme" — gen-z unhinged ──
+async function generateTemplateChaos(ctx, w, h, opts) {
+    const hasPhoto = !!opts.photoImg;
+
+    // Bright clash colors bg
+    const bgColors = ['#39ff14', '#ff00ff', '#ffff00', '#00ffff'];
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#ff00ff');
+    grad.addColorStop(0.33, '#39ff14');
+    grad.addColorStop(0.66, '#ffff00');
+    grad.addColorStop(1, '#00ffff');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Noisy overlay
+    ctx.globalAlpha = 0.08;
+    for (let i = 0; i < 2000; i++) {
+        ctx.fillStyle = bgColors[Math.floor(Math.random() * bgColors.length)];
+        const sz = 4 + Math.random() * 8;
+        ctx.fillRect(Math.random() * w, Math.random() * h, sz, sz);
+    }
+    ctx.globalAlpha = 1;
+
+    // Random scattered emoji
+    const emojis = ['🔥', '💀', '😤', '🤯', '💪', '🇬🇪', '👑', '🫠', '😈'];
+    ctx.font = '60px sans-serif';
+    ctx.globalAlpha = 0.25;
+    for (let i = 0; i < 12; i++) {
+        const em = emojis[Math.floor(Math.random() * emojis.length)];
+        ctx.save();
+        ctx.translate(Math.random() * w, Math.random() * h);
+        ctx.rotate((Math.random() - 0.5) * 0.8);
+        ctx.fillText(em, 0, 0);
+        ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.textAlign = 'center';
+
+    // Photo as circular cutout
+    if (hasPhoto) {
+        ctx.save();
+        const cx = w / 2, cy = 420, radius = 280;
+        ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.clip();
+        const img = opts.photoImg;
+        const sc = Math.max(radius * 2 / img.naturalWidth, radius * 2 / img.naturalHeight);
+        const dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+        ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
+        ctx.restore();
+        // Circle border
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.arc(w / 2, 420, 280, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    const contentY = hasPhoto ? 780 : 300;
+
+    // "I CAN'T STOP" or hype text for high counts
+    const chaosTexts = opts.totalToday >= 15
+        ? { ka: 'ვეღარ ვჩერდები!!! 🤯', en: 'I CAN\'T STOP!!! 🤯' }
+        : opts.totalToday >= 8
+            ? { ka: 'გაჩერება არ ვიცი 😤', en: 'NO BRAKES 😤' }
+            : { ka: 'დავიწყე!! 🔥', en: 'JUST GETTING STARTED!! 🔥' };
+
+    ctx.save();
+    ctx.translate(w / 2, contentY);
+    ctx.rotate(-0.06);
+    ctx.fillStyle = '#000';
+    ctx.font = '900 56px Impact, sans-serif';
+    ctx.fillText(chaosTexts[lang], 0, 0);
+    ctx.restore();
+
+    // Huge tilted count
+    ctx.save();
+    ctx.translate(w / 2, contentY + 220);
+    ctx.rotate(0.08);
+    // White stroke outline
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 16;
+    ctx.font = '900 280px Impact, sans-serif';
+    ctx.strokeText(opts.totalToday.toString(), 0, 0);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(opts.totalToday.toString(), 0, 0);
+    ctx.restore();
+
+    // Main dish image huge and rotated
+    if (opts.activeDishes.length > 0) {
+        const mainDish = opts.activeDishes[0];
+        ctx.save();
+        ctx.translate(w / 2, contentY + 540);
+        ctx.rotate(-0.12);
+        await drawDishWithMood(ctx, mainDish.key, dishCounts[mainDish.key].today, 0, 0, 250, 250);
+        ctx.restore();
+
+        // Other dishes smaller
+        if (opts.activeDishes.length > 1) {
+            const others = opts.activeDishes.slice(1);
+            const otherY = contentY + 540;
+            let ox = 160;
+            for (const dish of others) {
+                ctx.save();
+                ctx.translate(ox, otherY + 80);
+                ctx.rotate((Math.random() - 0.5) * 0.3);
+                await drawDishWithMood(ctx, dish.key, dishCounts[dish.key].today, 0, 0, 120, 120);
+                ctx.restore();
+                ox = w - 160;
+            }
+        }
+    }
+
+    // Location
+    if (opts.locationText) {
+        ctx.save();
+        ctx.translate(w / 2, h - 280);
+        ctx.rotate(0.04);
+        ctx.fillStyle = '#000'; ctx.font = '900 34px Impact, sans-serif';
+        ctx.fillText('📍 ' + opts.locationText.toUpperCase(), 0, 0);
+        ctx.restore();
     }
 
     // Watermark
-    ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '600 36px -apple-system, sans-serif';
-    ctx.fillText('vchame.ge', w / 2, h - 160);
-    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.font = '28px -apple-system, sans-serif';
-    ctx.fillText(t('shareWatermark'), w / 2, h - 110);
-
-    // Streak on share card
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.font = '900 40px Impact, sans-serif';
+    ctx.fillText('vchame.ge', w / 2, h - 140);
     if (currentStreak >= 2) {
-        ctx.fillStyle = '#f5c518';
-        ctx.font = '800 30px -apple-system, sans-serif';
-        ctx.fillText(`🔥 Day ${currentStreak}`, w / 2, h - 60);
+        ctx.fillStyle = '#000'; ctx.font = '900 34px Impact, sans-serif';
+        ctx.fillText(`🔥 ${currentStreak} DAY STREAK`, w / 2, h - 90);
     }
-
-    // Personality badge on share card
-    const shareBadge = getPersonalityBadge();
-    if (totalAll > 0) {
-        ctx.fillStyle = '#f5c518';
-        ctx.font = '800 26px -apple-system, sans-serif';
-        ctx.fillText(shareBadge[lang], w / 2, h - 30);
+    if (opts.totalAll > 0) {
+        ctx.fillStyle = '#000'; ctx.font = '900 28px Impact, sans-serif';
+        ctx.fillText(opts.badge[lang], w / 2, h - 50);
     }
-
-    return canvas;
 }
 
-async function shareCard(locationText = '', photoImg = null) {
-    const canvas = await generateShareCard(locationText, photoImg);
+const TEMPLATES = [generateTemplateClean, generateTemplateNeon, generateTemplateRetro, generateTemplateChaos];
+const TEMPLATE_NAMES = {
+    ka: ['სუფთა', 'ნეონი', 'რეტრო', 'ქაოსი'],
+    en: ['Clean', 'Neon', 'Retro', 'Chaos'],
+};
+
+// ── Carousel state ──
+let carouselIdx = 0;
+
+function openCarousel() {
+    carouselIdx = 0;
+    dom.shareCarousel.classList.add('open');
+    dom.scTitle.textContent = t('scTitle');
+    dom.scShareLabel.textContent = t('scShare');
+    updateCarouselDots();
+    updateCarouselTransform();
+}
+
+function closeCarousel() {
+    dom.shareCarousel.classList.remove('open');
+}
+
+function updateCarouselDots() {
+    dom.scDots.querySelectorAll('.sc-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === carouselIdx);
+    });
+}
+
+function updateCarouselTransform() {
+    dom.scTrack.style.transform = `translateX(-${carouselIdx * 100}vw)`;
+}
+
+function goToCard(idx) {
+    carouselIdx = Math.max(0, Math.min(TEMPLATES.length - 1, idx));
+    updateCarouselDots();
+    updateCarouselTransform();
+}
+
+// Touch swipe on carousel
+(function setupCarouselSwipe() {
+    let startX = 0, startY = 0, dx = 0, swiping = false;
+    const track = dom.scTrack;
+
+    track.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        dx = 0;
+        swiping = false;
+        track.style.transition = 'none';
+    }, { passive: true });
+
+    track.addEventListener('touchmove', (e) => {
+        dx = e.touches[0].clientX - startX;
+        const dy = Math.abs(e.touches[0].clientY - startY);
+        if (!swiping && Math.abs(dx) > dy && Math.abs(dx) > 10) swiping = true;
+        if (swiping) {
+            const offset = -carouselIdx * window.innerWidth + dx;
+            track.style.transform = `translateX(${offset}px)`;
+        }
+    }, { passive: true });
+
+    track.addEventListener('touchend', () => {
+        track.style.transition = '';
+        if (swiping) {
+            if (dx < -50) goToCard(carouselIdx + 1);
+            else if (dx > 50) goToCard(carouselIdx - 1);
+            else updateCarouselTransform();
+        }
+        swiping = false;
+    });
+})();
+
+dom.scClose.addEventListener('click', closeCarousel);
+dom.scShareBtn.addEventListener('click', () => {
+    const canvas = document.getElementById('scCard' + carouselIdx);
     canvas.toBlob(async (blob) => {
         const file = new File([blob], 'vchame-stats.png', { type: 'image/png' });
         if (navigator.canShare?.({ files: [file] })) {
             try { await navigator.share({ files: [file] }); } catch {}
         }
     }, 'image/png');
+});
+
+async function renderAllTemplates(locationText, photoImg) {
+    const opts = getShareOpts(locationText, photoImg);
+    const w = 1080, h = 1920;
+    await Promise.all(TEMPLATES.map(async (fn, i) => {
+        const canvas = document.getElementById('scCard' + i);
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+        await fn(ctx, w, h, opts);
+    }));
 }
 
 // ── Stats panel ──
@@ -1161,7 +1574,8 @@ dom.shareGenerate.addEventListener('click', async () => {
     dom.shareModal.classList.remove('open');
     const loc = dom.shareLocation.value.trim();
     const photo = sharePhotoImg?.complete && sharePhotoImg.naturalWidth > 0 ? sharePhotoImg : null;
-    await shareCard(loc, photo);
+    await renderAllTemplates(loc, photo);
+    openCarousel();
 });
 
 // Tab switching

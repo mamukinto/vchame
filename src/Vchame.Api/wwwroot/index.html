@@ -211,6 +211,27 @@
         <div class="friend-profile-body" id="friendProfileBody"></div>
     </div>
 
+    <!-- Share carousel (full-screen template picker) -->
+    <div id="shareCarousel" class="share-carousel">
+        <div class="sc-header">
+            <button class="sc-close" id="scClose">✕</button>
+            <span class="sc-title" id="scTitle">აირჩიე სტილი</span>
+        </div>
+        <div class="sc-track" id="scTrack">
+            <canvas class="sc-card" id="scCard0" width="1080" height="1920"></canvas>
+            <canvas class="sc-card" id="scCard1" width="1080" height="1920"></canvas>
+            <canvas class="sc-card" id="scCard2" width="1080" height="1920"></canvas>
+            <canvas class="sc-card" id="scCard3" width="1080" height="1920"></canvas>
+        </div>
+        <div class="sc-dots" id="scDots">
+            <span class="sc-dot active"></span>
+            <span class="sc-dot"></span>
+            <span class="sc-dot"></span>
+            <span class="sc-dot"></span>
+        </div>
+        <button class="sc-share-btn" id="scShareBtn">📸 <span id="scShareLabel">გაზიარება</span></button>
+    </div>
+
     <canvas id="shareCanvas" width="1080" height="1920" style="display:none"></canvas>
     <script src="/app.js"></script>
     <script>
