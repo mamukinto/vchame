@@ -1225,8 +1225,8 @@ function openCarousel() {
     dom.shareCarousel.classList.add('open');
     dom.scTitle.textContent = t('scTitle');
     dom.scShareLabel.textContent = t('scShare');
+    dom.scTrack.scrollLeft = 0;
     updateCarouselDots();
-    updateCarouselTransform();
 }
 
 function closeCarousel() {
@@ -1239,49 +1239,14 @@ function updateCarouselDots() {
     });
 }
 
-function updateCarouselTransform() {
-    dom.scTrack.style.transform = `translateX(-${carouselIdx * 100}vw)`;
-}
-
-function goToCard(idx) {
-    carouselIdx = Math.max(0, Math.min(TEMPLATES.length - 1, idx));
-    updateCarouselDots();
-    updateCarouselTransform();
-}
-
-// Touch swipe on carousel
-(function setupCarouselSwipe() {
-    let startX = 0, startY = 0, dx = 0, swiping = false;
-    const track = dom.scTrack;
-
-    track.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        dx = 0;
-        swiping = false;
-        track.style.transition = 'none';
-    }, { passive: true });
-
-    track.addEventListener('touchmove', (e) => {
-        dx = e.touches[0].clientX - startX;
-        const dy = Math.abs(e.touches[0].clientY - startY);
-        if (!swiping && Math.abs(dx) > dy && Math.abs(dx) > 10) swiping = true;
-        if (swiping) {
-            const offset = -carouselIdx * window.innerWidth + dx;
-            track.style.transform = `translateX(${offset}px)`;
-        }
-    }, { passive: true });
-
-    track.addEventListener('touchend', () => {
-        track.style.transition = '';
-        if (swiping) {
-            if (dx < -50) goToCard(carouselIdx + 1);
-            else if (dx > 50) goToCard(carouselIdx - 1);
-            else updateCarouselTransform();
-        }
-        swiping = false;
-    });
-})();
+// Native scroll-snap handles swiping — just track the active index
+dom.scTrack.addEventListener('scroll', () => {
+    const idx = Math.round(dom.scTrack.scrollLeft / dom.scTrack.clientWidth);
+    if (idx !== carouselIdx && idx >= 0 && idx < TEMPLATES.length) {
+        carouselIdx = idx;
+        updateCarouselDots();
+    }
+});
 
 dom.scClose.addEventListener('click', closeCarousel);
 

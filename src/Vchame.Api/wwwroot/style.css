@@ -1440,15 +1440,19 @@ body {
 .sc-track {
     flex: 1;
     display: flex;
-    overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    touch-action: pan-y;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
     min-height: 0;
+    scrollbar-width: none;
 }
+.sc-track::-webkit-scrollbar { display: none; }
 
 .sc-slide {
     flex-shrink: 0;
     width: 100vw;
+    scroll-snap-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
