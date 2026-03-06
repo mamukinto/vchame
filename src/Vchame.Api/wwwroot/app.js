@@ -310,7 +310,7 @@ const ROASTS = {
     },
     qababi: {
         5:  { ka: 'კარგი გახურება! 🔥', en: 'nice warmup! 🔥' },
-        10: { ka: 'მაყლის ოსტატი! 🥩', en: 'grill master! 🥩' },
+        10: { ka: 'მაყალის ოსტატი! 🥩', en: 'grill master! 🥩' },
         15: { ka: 'შენ ხარ ჩემპიონი! 🏆', en: 'you\'re a champion! 🏆' },
         20: { ka: 'ქაბაბის მეფე! 👑', en: 'qababi king! 👑' },
         30: { ka: 'შენ ღმერთი ხარ! 🔱', en: 'you are a GOD! 🔱' },
@@ -417,7 +417,7 @@ function getPersonalityBadge() {
     const badges = {
         khinkali:  { ka: '🥟 ხინკლის მამა', en: '🥟 Khinkali Lord' },
         khachapuri: { ka: '🧀 ყველის ბოსი', en: '🧀 Cheese Brain' },
-        qababi:    { ka: '🔥 მაყლის ოსტატი', en: '🔥 Grill Master' },
+        qababi:    { ka: '🔥 მაყალის ოსტატი', en: '🔥 Grill Master' },
         lobiani:   { ka: '🫘 ლობიანის ფანატიკოსი', en: '🫘 Bean Lover' },
     };
     return badges[dominant?.key] || { ka: '🍽 დამწყები', en: '🍽 Rookie' };
