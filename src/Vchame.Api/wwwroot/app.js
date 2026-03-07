@@ -1797,6 +1797,117 @@ document.getElementById('spFriendsAddBtn')?.addEventListener('click', async () =
     }
 });
 
+// ── Settings panel ──
+function openSettingsPanel() {
+    dom.settingsPanel.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    updateSettingsUI();
+}
+
+function closeSettingsPanel() {
+    dom.settingsPanel.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function updateSettingsUI() {
+    const langLabels = {
+        ka: {
+            back: 'უკან', title: 'პარამეტრები',
+            langSection: 'ენა / Language', langLabel: 'ენა',
+            profileSection: 'პროფილი / Profile', nicknameLabel: 'სახელი',
+            nicknamePlaceholder: 'შენი სახელი...', save: 'შენახვა',
+            codeLabel: 'შენი კოდი', copy: 'კოპირება',
+            dangerSection: 'საშიში ზონა / Danger Zone',
+            resetBtn: '🗑 ყველაფრის წაშლა',
+            resetHint: 'ყველა დღის, კვირის, თვის და სულ მონაცემები წაიშლება. ვერ აღდგება!',
+        },
+        en: {
+            back: 'Back', title: 'Settings',
+            langSection: 'Language', langLabel: 'Language',
+            profileSection: 'Profile', nicknameLabel: 'Nickname',
+            nicknamePlaceholder: 'Your name...', save: 'Save',
+            codeLabel: 'Your code', copy: 'Copy',
+            dangerSection: 'Danger Zone',
+            resetBtn: '🗑 Reset All Counts',
+            resetHint: 'All your daily, weekly, monthly and all-time data will be permanently deleted.',
+        }
+    };
+    const l = langLabels[lang];
+    dom.settingsBackLabel.textContent = l.back;
+    dom.settingsTitle.textContent = l.title;
+    dom.settingsLangTitle.textContent = l.langSection;
+    dom.settingsLangLabel.textContent = l.langLabel;
+    dom.settingsLangToggle.textContent = lang === 'ka' ? 'EN' : 'ქარ';
+    dom.settingsProfileTitle.textContent = l.profileSection;
+    dom.settingsNicknameLabel.textContent = l.nicknameLabel;
+    dom.settingsNicknameInput.placeholder = l.nicknamePlaceholder;
+    dom.settingsNicknameInput.value = myNickname;
+    dom.settingsNicknameSave.textContent = l.save;
+    dom.settingsFriendCodeLabel.textContent = l.codeLabel;
+    dom.settingsFriendCode.textContent = myFriendCode || '------';
+    dom.settingsCopyCode.textContent = l.copy;
+    dom.settingsDangerTitle.textContent = l.dangerSection;
+    dom.settingsResetAll.textContent = l.resetBtn;
+    dom.settingsResetHint.textContent = l.resetHint;
+}
+
+dom.settingsBtn.addEventListener('click', () => {
+    loadMyFriendCode().then(() => openSettingsPanel());
+});
+dom.settingsPanelClose.addEventListener('click', closeSettingsPanel);
+
+dom.settingsLangToggle.addEventListener('click', () => {
+    lang = lang === 'ka' ? 'en' : 'ka';
+    applyLang();
+    updateSettingsUI();
+});
+
+dom.settingsNicknameSave.addEventListener('click', async () => {
+    const nickname = dom.settingsNicknameInput.value.trim();
+    if (nickname) {
+        await setNickname(nickname);
+        myNickname = nickname;
+    }
+});
+
+dom.settingsCopyCode.addEventListener('click', () => {
+    const code = dom.settingsFriendCode.textContent;
+    if (navigator.clipboard && code && code !== '------') {
+        navigator.clipboard.writeText(code).then(() => {
+            const original = dom.settingsCopyCode.textContent;
+            dom.settingsCopyCode.textContent = lang === 'ka' ? '✓ დაკოპირდა' : '✓ Copied';
+            setTimeout(() => { dom.settingsCopyCode.textContent = original; }, 2000);
+        });
+    }
+});
+
+dom.settingsResetAll.addEventListener('click', async () => {
+    const msg = lang === 'ka'
+        ? 'ნამდვილად გინდა ყველა მონაცემის წაშლა? ვერ აღდგება!'
+        : 'Are you sure you want to delete ALL your data? This cannot be undone!';
+    if (!confirm(msg)) return;
+    try {
+        const res = await fetch('/api/reset-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId })
+        });
+        if (res.ok) {
+            Object.keys(dishCounts).forEach(dish => {
+                dishCounts[dish] = { today: 0, week: 0, month: 0, allTime: 0 };
+            });
+            localStorage.removeItem('vchame_counts_cache');
+            currentStreak = 0;
+            pendingCount = 0;
+            updateAllCounters();
+            updateMood();
+            updateStreakDisplay();
+            loadGlobal();
+            closeSettingsPanel();
+        }
+    } catch {}
+});
+
 // ── Init ──
 // Restore cached counts instantly (no zero-flash for returning users)
 try {

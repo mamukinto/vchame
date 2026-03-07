@@ -221,6 +221,15 @@ api.MapGet("/leaderboard", async (string? deviceId, string? period, AppDb db) =>
     return Results.Ok(result);
 });
 
+api.MapPost("/reset-all", async (ResetRequest req, AppDb db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.DeviceId)) return Results.BadRequest();
+    var counts = await db.DailyCounts.Where(x => x.DeviceId == req.DeviceId).ToListAsync();
+    db.DailyCounts.RemoveRange(counts);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { success = true, deleted = counts.Count });
+});
+
 api.MapGet("/global", async (AppDb db) =>
 {
     var total = await db.DailyCounts.SumAsync(x => x.Count);
@@ -432,3 +441,4 @@ public class Friend
 public record EatRequest(string DeviceId, int Count, string DishType = "khinkali", string? LocalDate = null);
 public record SetNicknameRequest(string DeviceId, string? Nickname);
 public record AddFriendRequest(string DeviceId, string FriendCode);
+public record ResetRequest(string DeviceId);

@@ -22,6 +22,7 @@
         <div class="top-bar">
             <div class="global-banner" id="globalBanner"></div>
             <a href="/stats" id="statsLink" class="stats-btn" title="Stats">📊 <span data-i18n="statsBtn">სტატ.</span></a>
+            <button class="settings-gear-btn" id="settingsBtn" title="Settings">⚙</button>
             <button class="lang-btn" id="langBtn">EN</button>
         </div>
         <div id="offlineBanner" class="offline-banner" style="display:none">
@@ -210,6 +211,46 @@
             <div style="width:60px"></div>
         </div>
         <div class="friend-profile-body" id="friendProfileBody"></div>
+    </div>
+
+    <!-- Settings panel -->
+    <div id="settingsPanel" class="settings-panel">
+        <div class="stats-panel-bar">
+            <button class="stats-back-btn" id="settingsPanelClose">← <span id="settingsBackLabel">უკან</span></button>
+            <span class="stats-panel-title" id="settingsTitle">პარამეტრები</span>
+            <div style="width:60px"></div>
+        </div>
+        <div class="settings-body">
+            <div class="settings-section">
+                <div class="settings-section-title" id="settingsLangTitle">ენა / Language</div>
+                <div class="settings-row">
+                    <span id="settingsLangLabel">ენა</span>
+                    <button class="settings-lang-toggle" id="settingsLangToggle">EN</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title" id="settingsProfileTitle">პროფილი / Profile</div>
+                <div class="settings-row">
+                    <span id="settingsNicknameLabel">სახელი</span>
+                    <div class="settings-nickname-row">
+                        <input id="settingsNicknameInput" class="settings-input" type="text" maxlength="50" placeholder="შენი სახელი...">
+                        <button id="settingsNicknameSave" class="settings-save-btn">შენახვა</button>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <span id="settingsFriendCodeLabel">შენი კოდი</span>
+                    <div class="settings-code-row">
+                        <span id="settingsFriendCode" class="settings-code">------</span>
+                        <button id="settingsCopyCode" class="settings-copy-btn">კოპირება</button>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-section settings-danger">
+                <div class="settings-section-title" id="settingsDangerTitle">საშიში ზონა / Danger Zone</div>
+                <button class="settings-reset-btn" id="settingsResetAll">🗑 ყველაფრის წაშლა / Reset All Counts</button>
+                <p class="settings-reset-hint" id="settingsResetHint">ყველა დღის, კვირის, თვის და სულ მონაცემები წაიშლება. ვერ აღდგება!</p>
+            </div>
+        </div>
     </div>
 
     <!-- Share carousel (full-screen template picker) -->
